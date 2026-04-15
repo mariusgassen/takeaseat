@@ -3,6 +3,9 @@ node_modules/
 .npm
 *.log
 .turbo/
+coverage/
+.nyc_output/
+*.lcov
 .next/
 out/
 dist/
@@ -10,6 +13,7 @@ build/
 
 # Go
 apps/api/bin/
+apps/api/gen/
 *.exe
 *.test
 *.out
@@ -35,3 +39,6 @@ Thumbs.db
 # Generated
 packages/types/src/generated/
 openapi.yaml
+
+# Expo
+.expo/
