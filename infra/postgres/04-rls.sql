@@ -13,6 +13,7 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 
 -- ── Enable RLS ────────────────────────────────────────────────────────────────
+ALTER TABLE tenants         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE resources       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reservations    ENABLE ROW LEVEL SECURITY;
@@ -21,22 +22,35 @@ ALTER TABLE user_identities ENABLE ROW LEVEL SECURITY;
 
 -- ── Tenant isolation policies ─────────────────────────────────────────────────
 
+-- tenants: api_user sees only the current tenant's own row
+CREATE POLICY tenant_isolation ON tenants
+    TO api_user
+    USING      (id::text = current_setting('app.tenant_id', true))
+    WITH CHECK (id::text = current_setting('app.tenant_id', true));
+
+-- Note: tenants RLS uses `id` (not tenant_id) since tenants.id IS the tenant identifier.
+-- api_user can only read/write the current tenant's own row.
+
 -- Direct tenant_id check for tables that have the column
 CREATE POLICY tenant_isolation ON users
     TO api_user
-    USING (tenant_id::text = current_setting('app.tenant_id', true));
+    USING      (tenant_id::text = current_setting('app.tenant_id', true))
+    WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true));
 
 CREATE POLICY tenant_isolation ON resources
     TO api_user
-    USING (tenant_id::text = current_setting('app.tenant_id', true));
+    USING      (tenant_id::text = current_setting('app.tenant_id', true))
+    WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true));
 
 CREATE POLICY tenant_isolation ON reservations
     TO api_user
-    USING (tenant_id::text = current_setting('app.tenant_id', true));
+    USING      (tenant_id::text = current_setting('app.tenant_id', true))
+    WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true));
 
 CREATE POLICY tenant_isolation ON sso_providers
     TO api_user
-    USING (tenant_id::text = current_setting('app.tenant_id', true));
+    USING      (tenant_id::text = current_setting('app.tenant_id', true))
+    WITH CHECK (tenant_id::text = current_setting('app.tenant_id', true));
 
 -- user_identities has no tenant_id — isolate via user_id membership.
 -- Because users has RLS applied, this subquery is automatically filtered
@@ -44,6 +58,12 @@ CREATE POLICY tenant_isolation ON sso_providers
 CREATE POLICY tenant_isolation ON user_identities
     TO api_user
     USING (
+        user_id IN (
+            SELECT id FROM users
+            WHERE tenant_id::text = current_setting('app.tenant_id', true)
+        )
+    )
+    WITH CHECK (
         user_id IN (
             SELECT id FROM users
             WHERE tenant_id::text = current_setting('app.tenant_id', true)
