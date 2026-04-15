@@ -1,0 +1,10 @@
+{
+  "name": "@takeaseat/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "expo start",
+    "build": "expo export",
+    "lint": "expo lint"
+  }
+}
