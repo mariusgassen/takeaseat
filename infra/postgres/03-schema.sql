@@ -50,6 +50,9 @@ CREATE INDEX idx_resources_tenant_id ON resources(tenant_id);
 CREATE INDEX idx_resources_type      ON resources(tenant_id, type);
 CREATE INDEX idx_resources_location  ON resources USING GIST(location)
     WHERE location IS NOT NULL;
+CREATE INDEX idx_resources_tenant_type_active
+    ON resources(tenant_id, type)
+    WHERE is_active = TRUE;
 
 -- ── Reservations ──────────────────────────────────────────────────────────────
 CREATE TYPE reservation_status AS ENUM ('confirmed', 'cancelled', 'checked_in', 'no_show');
@@ -63,19 +66,25 @@ CREATE TABLE reservations (
     status      reservation_status NOT NULL DEFAULT 'confirmed',
     notes       TEXT,
     created_at  TIMESTAMPTZ        NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ        NOT NULL DEFAULT NOW(),
 
     -- Conflict detection: no two confirmed reservations can overlap for same resource.
     -- This is atomic — no application-level locking needed.
     EXCLUDE USING GIST (
         resource_id WITH =,
         during      WITH &&
-    ) WHERE (status = 'confirmed')
+    ) WHERE (status IN ('confirmed', 'checked_in'))
 );
 
 CREATE INDEX idx_reservations_tenant_id   ON reservations(tenant_id);
 CREATE INDEX idx_reservations_resource_id ON reservations(resource_id);
 CREATE INDEX idx_reservations_user_id     ON reservations(user_id);
 CREATE INDEX idx_reservations_during      ON reservations USING GIST(during);
+CREATE INDEX idx_reservations_resource_during
+    ON reservations USING GIST (resource_id, during)
+    WHERE status IN ('confirmed', 'checked_in');
+CREATE INDEX idx_reservations_tenant_status
+    ON reservations(tenant_id, status);
 
 -- ── SSO Providers ─────────────────────────────────────────────────────────────
 CREATE TYPE sso_protocol AS ENUM ('saml', 'oidc', 'oauth2');
