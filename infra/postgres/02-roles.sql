@@ -2,6 +2,7 @@
 -- RLS policies are scoped to this role — superuser bypasses RLS by default.
 -- The Go API connects as api_user; migrations run as superuser via a separate connection.
 
+\connect takeaseat
 CREATE ROLE api_user WITH LOGIN PASSWORD 'changeme_api';
 
 -- Grant connect to the app database
