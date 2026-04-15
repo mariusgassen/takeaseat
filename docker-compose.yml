@@ -28,6 +28,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+      start_period: 10s
 
   zitadel:
     image: ghcr.io/zitadel/zitadel:latest
@@ -48,6 +49,12 @@ services:
       ZITADEL_EXTERNALSECURE: ${ZITADEL_EXTERNAL_SECURE}
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/debug/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,7 +73,7 @@ services:
       redis:
         condition: service_healthy
       zitadel:
-        condition: service_started
+        condition: service_healthy
 
   web:
     build:
