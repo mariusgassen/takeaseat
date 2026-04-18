@@ -35,7 +35,7 @@ components:
       type: object
       required: [has_more]
       properties:
-        next_cursor: { type: string, nullable: true }
+        next_cursor: { type: [string, "null"] }
         has_more:    { type: boolean }
 
     # ── Tenant ───────────────────────────────────────────────────────────────
@@ -109,7 +109,7 @@ components:
         name:       { type: string }
         type:       { $ref: "#/components/schemas/ResourceType" }
         capacity:   { type: integer, minimum: 1 }
-        floor:      { type: integer, nullable: true }
+        floor:      { type: [integer, "null"] }
         amenities:  { type: array, items: { type: string } }
         is_active:  { type: boolean }
         created_at: { type: string, format: date-time }
@@ -131,7 +131,7 @@ components:
         name:      { type: string }
         type:      { $ref: "#/components/schemas/ResourceType" }
         capacity:  { type: integer, minimum: 1 }
-        floor:     { type: integer, nullable: true }
+        floor:     { type: [integer, "null"] }
         amenities: { type: array, items: { type: string } }
         is_active: { type: boolean }
 
@@ -167,7 +167,7 @@ components:
         resource_id: { type: string, format: uuid }
         during:      { $ref: "#/components/schemas/TimeWindow" }
         status:      { $ref: "#/components/schemas/ReservationStatus" }
-        notes:       { type: string, nullable: true }
+        notes:       { type: [string, "null"] }
         created_at:  { type: string, format: date-time }
         updated_at:  { type: string, format: date-time }
 
@@ -221,12 +221,14 @@ components:
         issuer_url: { type: string, format: uri }
 
     SSOProviderListResponse:
-      type: object
-      required: [data]
-      properties:
-        data:
-          type: array
-          items: { $ref: "#/components/schemas/SSOProvider" }
+      allOf:
+        - $ref: "#/components/schemas/CursorPage"
+        - type: object
+          required: [data]
+          properties:
+            data:
+              type: array
+              items: { $ref: "#/components/schemas/SSOProvider" }
 
   responses:
     BadRequest:
@@ -308,6 +310,26 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/v1/resources/availability/stream:
+    get:
+      operationId: streamAvailability
+      summary: SSE stream for resource availability changes
+      parameters:
+        - name: resource_ids
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Comma-separated UUIDs
+      responses:
+        "200":
+          description: Server-Sent Events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
   /api/v1/resources/{id}:
     parameters:
       - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
@@ -383,6 +405,7 @@ paths:
               schema: { $ref: "#/components/schemas/Reservation" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/Conflict" }
 
   /api/v1/reservations/{id}:
@@ -405,6 +428,7 @@ paths:
       responses:
         "204": { description: No Content }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
   /api/v1/reservations/{id}/status:
@@ -426,6 +450,7 @@ paths:
               schema: { $ref: "#/components/schemas/Reservation" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
@@ -553,6 +578,9 @@ paths:
     get:
       operationId: listSSOProviders
       summary: List SSO providers (admin only)
+      parameters:
+        - { name: after, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
       responses:
         "200":
           description: OK
@@ -590,23 +618,3 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
-
-  /api/v1/resources/availability/stream:
-    get:
-      operationId: streamAvailability
-      summary: SSE stream for resource availability changes
-      parameters:
-        - name: resource_ids
-          in: query
-          required: true
-          schema:
-            type: string
-            description: Comma-separated UUIDs
-      responses:
-        "200":
-          description: Server-Sent Events stream
-          content:
-            text/event-stream:
-              schema:
-                type: string
-        "401": { $ref: "#/components/responses/Unauthorized" }
