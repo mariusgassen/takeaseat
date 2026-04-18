@@ -61,6 +61,48 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **No Laziness:** Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact:** Only touch what's necessary. No side effects with new bugs.
 
+## Test Policy (enforced on every new feature)
+
+Full policy: [`docs/testing.md`](./docs/testing.md). Read it before
+writing code that introduces new behaviour. Summary of the rules
+that apply to every PR:
+
+1. **Every new feature ships with tests.** New business logic
+   without tests blocks merge. Trivial render-only components are
+   exempt — covered by upstream integration tests.
+2. **Test behaviour, not implementation.** Drive components like a
+   user (`getByRole`, `getByLabelText`). No asserting on internal
+   state, class names, or DOM structure that isn't part of the
+   contract.
+3. **Tests live next to source.** `Foo.tsx` → `Foo.test.tsx` in the
+   same directory. No parallel `__tests__` tree.
+4. **Mock at the boundary.** Mock `fetch` / `next/navigation` at the
+   call site, never internal modules. Reuse fixtures from
+   `apps/web/lib/mocks/`.
+5. **Tools.** Vitest + React Testing Library (jsdom). One config per
+   workspace. No new test runner without a discussion.
+6. **Coverage floors enforced in CI** (vitest threshold + Codecov):
+   - `packages/ui` — 80 % lines / 75 % branches.
+   - `apps/web`   — 70 % lines / 65 % branches.
+   Excludes: thin Radix wrappers, generated types, mock fixtures,
+   `page.tsx`/`layout.tsx` shells, navigation chrome.
+7. **No flaky tests.** A flaky test is broken — fix or delete.
+8. **Verification before "done":** run the workspace's `test` and
+   `typecheck` scripts. CI runs `web-ci` on every PR touching the
+   web stack.
+9. **When changing a component**, update or add a test in the same
+   commit. Don't tack tests on later.
+10. **Snapshots are last resort** — only for stable, low-churn
+    surfaces (design tokens, generated code), reviewed line-by-line.
+
+How to run, locally:
+
+```bash
+npm test --workspaces                          # all
+npm run test:coverage --workspace=@takeaseat/web
+npm run test:watch --workspace=@takeaseat/ui
+```
+
 ## Context Navigation (Graphify)
 
 ### 3-Layer Query Rule
