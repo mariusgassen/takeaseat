@@ -1,0 +1,9 @@
+{
+  "name": "@takeaseat/types",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/generated/index.ts",
+  "scripts": {
+    "generate": "orval"
+  }
+}
