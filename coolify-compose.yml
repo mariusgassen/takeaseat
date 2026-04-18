@@ -1,0 +1,88 @@
+x-coolify-common: &coolify-common
+  restart: unless-stopped
+  pull_policy: if-not-present
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    <<: *coolify-common
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    <<: *coolify-common
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:v2
+    <<: *coolify-common
+    command: start-from-init --masterkey "${ZITADEL_MASTERKEY}" --tlsMode disabled
+    environment:
+      ZITADEL_DATABASE_POSTGRES_HOST: ${{ postgres.fqdn }}
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_DATABASE: ${ZITADEL_DB}
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${ZITADEL_DB_USER}
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ${ZITADEL_DB_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${DB_USER}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${DB_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_EXTERNALDOMAIN: ${{ ZITADEL_DOMAIN }}
+      ZITADEL_EXTERNALPORT: ${{ ZITADEL_PORT }}
+      ZITADEL_EXTERNALSECURE: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  api:
+    image: ghcr.io/takeaseat/api:latest
+    <<: *coolify-common
+    environment:
+      POSTGRES_URL: postgres://${DB_USER}:${DB_PASSWORD}@${{ postgres.fqdn }}:5432/${DB_NAME}
+      REDIS_URL: redis://${{ redis.fqdn }}:6379
+      ZITADEL_ISSUER_URL: http://zitadel:${{ ZITADEL_PORT }}
+      API_PORT: "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      zitadel:
+        condition: service_healthy
+
+  web:
+    image: ghcr.io/takeaseat/web:latest
+    <<: *coolify-common
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: takeaseat_internal
+    driver: bridge
