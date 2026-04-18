@@ -1,5 +1,9 @@
 # Take A Seat
 
+[![web-ci](https://github.com/mariusgassen/takeaseat/actions/workflows/web-ci.yml/badge.svg?branch=main)](https://github.com/mariusgassen/takeaseat/actions/workflows/web-ci.yml)
+[![coverage – ui](https://codecov.io/gh/mariusgassen/takeaseat/branch/main/graph/badge.svg?flag=ui)](https://codecov.io/gh/mariusgassen/takeaseat?flags%5B0%5D=ui)
+[![coverage – web](https://codecov.io/gh/mariusgassen/takeaseat/branch/main/graph/badge.svg?flag=web)](https://codecov.io/gh/mariusgassen/takeaseat?flags%5B0%5D=web)
+
 Self-hosted workspace reservation system. Book meeting rooms, desks, parking spots, and equipment. Multi-tenant, role-based, SSO-ready.
 
 ## Stack
@@ -87,6 +91,20 @@ Zitadel handles all auth flows. The Go API validates JWTs only — no session st
 - Username + password (small teams)
 - OAuth2 (Google, Microsoft)
 - SAML / OIDC per-tenant IdP (enterprise — Okta, Entra ID)
+
+## Testing
+
+Test policy lives in [`docs/testing.md`](./docs/testing.md). Per-package
+runner is Vitest with v8 coverage; thresholds are enforced in CI.
+
+```bash
+npm test --workspaces                    # all
+npm run test:coverage --workspace=@takeaseat/web
+```
+
+CI: [`.github/workflows/web-ci.yml`](./.github/workflows/web-ci.yml)
+runs lint, typecheck, test, build for every PR touching the web stack
+and uploads coverage to Codecov with per-package flags (`ui`, `web`).
 
 ## License
 

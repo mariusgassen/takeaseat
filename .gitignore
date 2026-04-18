@@ -11,6 +11,7 @@ out/
 dist/
 build/
 *.tsbuildinfo
+coverage/
 
 # Go
 apps/api/bin/
