@@ -39,6 +39,8 @@ Thumbs.db
 # Generated
 packages/types/src/generated/
 openapi.yaml
+graphify-out/
+**/graphify-out/
 
 # Expo
 .expo/
