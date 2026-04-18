@@ -1,0 +1,612 @@
+openapi: "3.1.0"
+info:
+  title: Take A Seat API
+  version: "1.0.0"
+  description: Self-hosted workspace reservation system
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ── RFC 9457 Problem Details ─────────────────────────────────────────────
+    ProblemDetails:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:    { type: string, format: uri }
+        title:   { type: string }
+        status:  { type: integer }
+        detail:  { type: string }
+        instance: { type: string, format: uri }
+
+    # ── Pagination ───────────────────────────────────────────────────────────
+    CursorPage:
+      type: object
+      required: [has_more]
+      properties:
+        next_cursor: { type: string, nullable: true }
+        has_more:    { type: boolean }
+
+    # ── Tenant ───────────────────────────────────────────────────────────────
+    Tenant:
+      type: object
+      required: [id, name, slug, sso_enforced, created_at]
+      properties:
+        id:           { type: string, format: uuid }
+        name:         { type: string }
+        slug:         { type: string }
+        sso_enforced: { type: boolean }
+        created_at:   { type: string, format: date-time }
+
+    PatchTenantRequest:
+      type: object
+      properties:
+        name:         { type: string }
+        sso_enforced: { type: boolean }
+
+    # ── User ─────────────────────────────────────────────────────────────────
+    UserRole:
+      type: string
+      enum: [admin, manager, member, guest]
+
+    User:
+      type: object
+      required: [id, tenant_id, email, name, role, created_at]
+      properties:
+        id:         { type: string, format: uuid }
+        tenant_id:  { type: string, format: uuid }
+        email:      { type: string, format: email }
+        name:       { type: string }
+        role:       { $ref: "#/components/schemas/UserRole" }
+        created_at: { type: string, format: date-time }
+
+    CreateUserRequest:
+      type: object
+      required: [email, name, role]
+      properties:
+        email: { type: string, format: email }
+        name:  { type: string }
+        role:  { $ref: "#/components/schemas/UserRole" }
+
+    PatchUserRequest:
+      type: object
+      properties:
+        name: { type: string }
+        role: { $ref: "#/components/schemas/UserRole" }
+
+    UserListResponse:
+      allOf:
+        - $ref: "#/components/schemas/CursorPage"
+        - type: object
+          required: [data]
+          properties:
+            data:
+              type: array
+              items: { $ref: "#/components/schemas/User" }
+
+    # ── Resource ─────────────────────────────────────────────────────────────
+    ResourceType:
+      type: string
+      enum: [room, desk, parking, equipment]
+
+    Resource:
+      type: object
+      required: [id, tenant_id, name, type, capacity, amenities, is_active, created_at]
+      properties:
+        id:         { type: string, format: uuid }
+        tenant_id:  { type: string, format: uuid }
+        name:       { type: string }
+        type:       { $ref: "#/components/schemas/ResourceType" }
+        capacity:   { type: integer, minimum: 1 }
+        floor:      { type: integer, nullable: true }
+        amenities:  { type: array, items: { type: string } }
+        is_active:  { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    CreateResourceRequest:
+      type: object
+      required: [name, type, capacity]
+      properties:
+        name:      { type: string }
+        type:      { $ref: "#/components/schemas/ResourceType" }
+        capacity:  { type: integer, minimum: 1 }
+        floor:     { type: integer }
+        amenities: { type: array, items: { type: string }, default: [] }
+
+    UpdateResourceRequest:
+      type: object
+      required: [name, type, capacity, amenities, is_active]
+      properties:
+        name:      { type: string }
+        type:      { $ref: "#/components/schemas/ResourceType" }
+        capacity:  { type: integer, minimum: 1 }
+        floor:     { type: integer, nullable: true }
+        amenities: { type: array, items: { type: string } }
+        is_active: { type: boolean }
+
+    ResourceListResponse:
+      allOf:
+        - $ref: "#/components/schemas/CursorPage"
+        - type: object
+          required: [data]
+          properties:
+            data:
+              type: array
+              items: { $ref: "#/components/schemas/Resource" }
+
+    # ── Reservation ───────────────────────────────────────────────────────────
+    ReservationStatus:
+      type: string
+      enum: [confirmed, cancelled, checked_in, no_show]
+
+    TimeWindow:
+      type: object
+      required: [starts_at, ends_at]
+      properties:
+        starts_at: { type: string, format: date-time }
+        ends_at:   { type: string, format: date-time }
+
+    Reservation:
+      type: object
+      required: [id, tenant_id, user_id, resource_id, during, status, created_at, updated_at]
+      properties:
+        id:          { type: string, format: uuid }
+        tenant_id:   { type: string, format: uuid }
+        user_id:     { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
+        during:      { $ref: "#/components/schemas/TimeWindow" }
+        status:      { $ref: "#/components/schemas/ReservationStatus" }
+        notes:       { type: string, nullable: true }
+        created_at:  { type: string, format: date-time }
+        updated_at:  { type: string, format: date-time }
+
+    CreateReservationRequest:
+      type: object
+      required: [resource_id, during]
+      properties:
+        resource_id: { type: string, format: uuid }
+        during:      { $ref: "#/components/schemas/TimeWindow" }
+        notes:       { type: string }
+
+    PatchReservationStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: "#/components/schemas/ReservationStatus" }
+
+    ReservationListResponse:
+      allOf:
+        - $ref: "#/components/schemas/CursorPage"
+        - type: object
+          required: [data]
+          properties:
+            data:
+              type: array
+              items: { $ref: "#/components/schemas/Reservation" }
+
+    # ── SSO Provider ──────────────────────────────────────────────────────────
+    SSOProtocol:
+      type: string
+      enum: [saml, oidc, oauth2]
+
+    SSOProvider:
+      type: object
+      required: [id, tenant_id, name, protocol, issuer_url, is_active, created_at]
+      properties:
+        id:         { type: string, format: uuid }
+        tenant_id:  { type: string, format: uuid }
+        name:       { type: string }
+        protocol:   { $ref: "#/components/schemas/SSOProtocol" }
+        issuer_url: { type: string, format: uri }
+        is_active:  { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    CreateSSOProviderRequest:
+      type: object
+      required: [name, protocol, issuer_url]
+      properties:
+        name:       { type: string }
+        protocol:   { $ref: "#/components/schemas/SSOProtocol" }
+        issuer_url: { type: string, format: uri }
+
+    SSOProviderListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/SSOProvider" }
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    Conflict:
+      description: Conflict (e.g., booking overlap)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+
+  /api/v1/resources:
+    get:
+      operationId: listResources
+      summary: List resources
+      parameters:
+        - { name: type,            in: query, schema: { $ref: "#/components/schemas/ResourceType" } }
+        - { name: capacity_min,    in: query, schema: { type: integer } }
+        - { name: floor,           in: query, schema: { type: integer } }
+        - { name: available_from,  in: query, schema: { type: string, format: date-time } }
+        - { name: available_until, in: query, schema: { type: string, format: date-time } }
+        - { name: after,           in: query, schema: { type: string } }
+        - { name: limit,           in: query, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResourceListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      operationId: createResource
+      summary: Create a resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateResourceRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Resource" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/resources/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getResource
+      summary: Get a resource
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Resource" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateResource
+      summary: Update a resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateResourceRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Resource" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteResource
+      summary: Delete a resource
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/reservations:
+    get:
+      operationId: listReservations
+      summary: List reservations
+      parameters:
+        - { name: resource_id, in: query, schema: { type: string, format: uuid } }
+        - { name: user_id,     in: query, schema: { type: string, format: uuid } }
+        - { name: from,        in: query, schema: { type: string, format: date-time } }
+        - { name: until,       in: query, schema: { type: string, format: date-time } }
+        - { name: after,       in: query, schema: { type: string } }
+        - { name: limit,       in: query, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReservationListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      operationId: createReservation
+      summary: Create a reservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateReservationRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Reservation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/reservations/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getReservation
+      summary: Get a reservation
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Reservation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteReservation
+      summary: Cancel / delete a reservation
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/reservations/{id}/status:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      operationId: patchReservationStatus
+      summary: Update reservation status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PatchReservationStatusRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Reservation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/me:
+    get:
+      operationId: getMe
+      summary: Get current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/v1/users:
+    get:
+      operationId: listUsers
+      summary: List users
+      parameters:
+        - { name: after, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createUser
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateUserRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/users/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getUser
+      summary: Get a user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: patchUser
+      summary: Update a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PatchUserRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteUser
+      summary: Delete a user
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/tenants/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getTenant
+      summary: Get tenant settings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: patchTenant
+      summary: Update tenant settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PatchTenantRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/sso-providers:
+    get:
+      operationId: listSSOProviders
+      summary: List SSO providers (admin only)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SSOProviderListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createSSOProvider
+      summary: Create an SSO provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateSSOProviderRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SSOProvider" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/sso-providers/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      operationId: deleteSSOProvider
+      summary: Delete an SSO provider
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/resources/availability/stream:
+    get:
+      operationId: streamAvailability
+      summary: SSE stream for resource availability changes
+      parameters:
+        - name: resource_ids
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Comma-separated UUIDs
+      responses:
+        "200":
+          description: Server-Sent Events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401": { $ref: "#/components/responses/Unauthorized" }
