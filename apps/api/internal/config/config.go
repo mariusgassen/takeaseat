@@ -1,46 +1,51 @@
 package config
 
 import (
-	"errors"
 	"os"
 	"strings"
 )
 
-// Config holds all runtime configuration loaded from environment variables.
 type Config struct {
-	PostgresURL      string // full DSN: postgres://api_user:pass@host:5432/takeaseat
-	RedisURL         string // redis://host:6379
-	ZitadelIssuerURL string // http://localhost:8080 (no trailing slash)
-	Port             string // 8000
+	PostgresURL      string
+	RedisURL         string
+	ZitadelIssuerURL string
+	Port            string
 }
 
-// Load reads required env vars and returns a Config.
-// Returns an error listing all missing required variables.
-func Load() (*Config, error) {
-	c := &Config{
-		PostgresURL:      os.Getenv("POSTGRES_URL"),
-		RedisURL:         os.Getenv("REDIS_URL"),
-		ZitadelIssuerURL: os.Getenv("ZITADEL_ISSUER_URL"),
-		Port:             os.Getenv("API_PORT"),
+func Load() *Config {
+	return &Config{
+		PostgresURL:      getEnv("POSTGRES_URL", "postgres://takeaseat:takeaseat@localhost:5432/takeaseat"),
+		RedisURL:         getEnv("REDIS_URL", "redis://localhost:6379"),
+		ZitadelIssuerURL: getEnv("ZITADEL_ISSUER_URL", "http://localhost:8080"),
+		Port:             getEnv("API_PORT", "8000"),
 	}
+}
 
-	var missing []string
-	if c.PostgresURL == "" {
-		missing = append(missing, "POSTGRES_URL")
+func getEnv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
 	}
-	if c.RedisURL == "" {
-		missing = append(missing, "REDIS_URL")
+	return fallback
+}
+
+func (c *Config) Validate() error {
+	var missing []string
+	if c.PostgresURL == "" || !strings.Contains(c.PostgresURL, "postgres") {
+		missing = append(missing, "POSTGRES_URL")
 	}
 	if c.ZitadelIssuerURL == "" {
 		missing = append(missing, "ZITADEL_ISSUER_URL")
 	}
 	if len(missing) > 0 {
-		return nil, errors.New("missing required env vars: " + strings.Join(missing, ", "))
+		return &ConfigError{Missing: missing}
 	}
+	return nil
+}
 
-	if c.Port == "" {
-		c.Port = "8000"
-	}
+type ConfigError struct {
+	Missing []string
+}
 
-	return c, nil
+func (e *ConfigError) Error() string {
+	return "missing required env vars: " + strings.Join(e.Missing, ", ")
 }

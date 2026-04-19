@@ -1,0 +1,9 @@
+-- migrate:up
+SET client_min_messages = WARNING;
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "postgis";
+
+-- migrate:down
+DROP EXTENSION IF EXISTS "postgis" CASCADE;
+DROP EXTENSION IF EXISTS "uuid-ossp" CASCADE;

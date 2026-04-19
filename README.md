@@ -9,15 +9,15 @@ Self-hosted workspace reservation system. Book meeting rooms, desks, parking spo
 
 ## Stack
 
-| Layer | Tech |
-|-------|------|
-| API | Go 1.26, Chi 5, pgx/v5, sqlc 1.30 |
-| Auth | Zitadel 4 (self-hosted) — local, OAuth2, OIDC, SAML |
-| DB | PostgreSQL 18 + PostGIS, Redis 8 |
-| Web | Next.js 16, TypeScript 6, Tailwind CSS v4, shadcn/ui |
-| Mobile | Expo SDK 55, NativeWind v5 |
-| Monorepo | Turborepo 2.9 |
-| Deploy | Docker Compose |
+| Layer    | Tech                                                 |
+|----------|------------------------------------------------------|
+| API      | Go 1.26, Chi 5, pgx/v5, sqlc 1.30                    |
+| Auth     | Zitadel 4 (self-hosted) — local, OAuth2, OIDC, SAML  |
+| DB       | PostgreSQL 18 + PostGIS, Redis 8                     |
+| Web      | Next.js 16, TypeScript 6, Tailwind CSS v4, shadcn/ui |
+| Mobile   | Expo SDK 55, NativeWind v5                           |
+| Monorepo | Turborepo 2.9                                        |
+| Deploy   | Docker Compose                                       |
 
 ## Structure
 
@@ -55,6 +55,7 @@ docker compose up -d
 ```
 
 Services:
+
 - API: http://localhost:8000
 - Web: http://localhost:3000
 - Zitadel: http://localhost:8080
@@ -75,7 +76,8 @@ npm run dev --filter=mobile
 
 ## Multi-Tenancy
 
-Single database, row-level security. Each request is scoped to a tenant via the Zitadel JWT org claim (`urn:zitadel:iam:org:id`). PostgreSQL RLS enforces isolation at the DB layer.
+Single database, row-level security. Each request is scoped to a tenant via the Zitadel JWT org claim (
+`urn:zitadel:iam:org:id`). PostgreSQL RLS enforces isolation at the DB layer.
 
 ## API
 

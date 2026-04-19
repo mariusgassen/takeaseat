@@ -1,22 +1,20 @@
 services:
   postgres:
-    image: postgres:18
+    image: postgres:18-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: takeaseat
+      POSTGRES_PASSWORD: takeaseat
+      POSTGRES_DB: takeaseat
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./infra/postgres:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U takeaseat -d takeaseat"]
       interval: 5s
       timeout: 5s
       retries: 10
-      start_period: 10s
 
   redis:
     image: redis:8-alpine
@@ -28,33 +26,26 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-      start_period: 10s
 
   zitadel:
-    image: ghcr.io/zitadel/zitadel:latest
+    image: ghcr.io/zitadel/zitadel:v2
     restart: on-failure
-    command: start-from-init --masterkey "${ZITADEL_MASTERKEY}" --tlsMode disabled
+    command: start-from-init --masterkey "zitadel-default-master-key-change-in-prod" --tlsMode disabled
     environment:
       ZITADEL_DATABASE_POSTGRES_HOST: postgres
       ZITADEL_DATABASE_POSTGRES_PORT: 5432
-      ZITADEL_DATABASE_POSTGRES_DATABASE: ${ZITADEL_DB}
-      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${ZITADEL_DB_USER}
-      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ${ZITADEL_DB_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: zitadel
       ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
-      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${POSTGRES_USER}
-      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${POSTGRES_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: takeaseat
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: takeaseat
       ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
-      ZITADEL_EXTERNALDOMAIN: ${ZITADEL_EXTERNAL_DOMAIN}
-      ZITADEL_EXTERNALPORT: ${ZITADEL_EXTERNAL_PORT}
-      ZITADEL_EXTERNALSECURE: ${ZITADEL_EXTERNAL_SECURE}
+      ZITADEL_EXTERNALDOMAIN: localhost
+      ZITADEL_EXTERNALPORT: 8080
+      ZITADEL_EXTERNALSECURE: "false"
     ports:
       - "8080:8080"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/debug/ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,15 +55,15 @@ services:
       context: ./apps/api
       dockerfile: Dockerfile
     restart: unless-stopped
-    env_file: .env
+    environment:
+      POSTGRES_URL: postgres://takeaseat:takeaseat@postgres:5432/takeaseat
+      REDIS_URL: redis://redis:6379
+      ZITADEL_ISSUER_URL: http://zitadel:8080
+      API_PORT: "8000"
     ports:
       - "8000:8000"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      zitadel:
         condition: service_healthy
 
   web:
@@ -80,7 +71,8 @@ services:
       context: ./apps/web
       dockerfile: Dockerfile
     restart: unless-stopped
-    env_file: .env
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:8000
     ports:
       - "3000:3000"
     depends_on:
