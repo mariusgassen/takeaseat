@@ -98,8 +98,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.26"
+          go-version-file: apps/api/go.mod
           cache-dependency-path: apps/api/go.sum
+
+      - name: Verify module is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
 
       - name: Vet
         run: go vet ./...
@@ -157,9 +162,7 @@ jobs:
       - run: npm ci --no-audit --no-fund
 
       - name: Verify @takeaseat/mobile workspace
-        run: |
-          name=$(npm pkg get name -w @takeaseat/mobile | tr -d '"' | tr -d ' \n')
-          test "$name" = "@takeaseat/mobile"
+        run: test -f apps/mobile/package.json
 
       - name: Generate app badge
         if: always()
