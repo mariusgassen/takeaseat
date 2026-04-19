@@ -114,6 +114,15 @@ components:
         is_active:  { type: boolean }
         created_at: { type: string, format: date-time }
 
+    ResourceWithAvailability:
+      allOf:
+        - $ref: "#/components/schemas/Resource"
+        - type: object
+          required: [is_available_now]
+          properties:
+            next_available_at: { type: [string, "null"], format: "date-time" }
+            is_available_now: { type: boolean }
+
     CreateResourceRequest:
       type: object
       required: [name, type, capacity]
@@ -143,7 +152,7 @@ components:
           properties:
             data:
               type: array
-              items: { $ref: "#/components/schemas/Resource" }
+              items: { $ref: "#/components/schemas/ResourceWithAvailability" }
 
     # ── Reservation ───────────────────────────────────────────────────────────
     ReservationStatus:

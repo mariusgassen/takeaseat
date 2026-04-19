@@ -20,7 +20,9 @@
     "paths": {
       "@takeaseat/ui": ["packages/ui/src/index.ts"],
       "@takeaseat/ui/*": ["packages/ui/src/*"],
-      "@takeaseat/types": ["packages/types/src/index.ts"]
+      "@takeaseat/types": ["packages/types/src/index.ts"],
+      "@takeaseat/types/generated": ["packages/types/src/generated/index.ts"],
+      "@takeaseat/types/generated/*": ["packages/types/src/generated/*"]
     }
   }
 }

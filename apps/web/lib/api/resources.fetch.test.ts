@@ -16,8 +16,7 @@ describe("searchResources", () => {
     vi.mocked(apiListResources).mockResolvedValue({
       status: 200,
       data: { data: [], has_more: false, next_cursor: null },
-      headers: new Headers(),
-    });
+    } as any);
     await searchResources({});
     expect(apiListResources).toHaveBeenCalledWith({}, expect.any(Object));
   });
@@ -26,8 +25,7 @@ describe("searchResources", () => {
     vi.mocked(apiListResources).mockResolvedValue({
       status: 200,
       data: { data: [], has_more: false, next_cursor: null },
-      headers: new Headers(),
-    });
+    } as any);
     await searchResources({ type: "desk", capacity_min: 2 });
     expect(apiListResources).toHaveBeenCalledWith(
       { type: "desk", capacity_min: 2 },
@@ -39,8 +37,7 @@ describe("searchResources", () => {
     vi.mocked(apiListResources).mockResolvedValue({
       status: 401,
       data: { type: "about:blank", title: "Unauthorized", status: 401 },
-      headers: new Headers(),
-    });
+    } as any);
     await expect(searchResources({})).rejects.toThrow("Unauthorized");
   });
 
@@ -48,18 +45,16 @@ describe("searchResources", () => {
     vi.mocked(apiListResources).mockResolvedValue({
       status: 500,
       data: { type: "about:blank", title: "Internal Server Error", status: 500 },
-      headers: new Headers(),
-    });
+    } as any);
     await expect(searchResources({})).rejects.toThrow(/500/);
   });
 
   it("returns the parsed data array on success", async () => {
-    const sample = [{ id: "r1", name: "Aurora" }] as any;
+    const sample = [{ id: "r1", name: "Aurora", tenant_id: "t1", type: "desk", capacity: 1, amenities: [], is_active: true, created_at: "2026-01-01T00:00:00Z", is_available_now: true, next_available_at: null }] as any;
     vi.mocked(apiListResources).mockResolvedValue({
       status: 200,
       data: { data: sample, has_more: false, next_cursor: null },
-      headers: new Headers(),
-    });
+    } as any);
     const result = await searchResources({});
     expect(result).toEqual(sample);
   });

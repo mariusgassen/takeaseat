@@ -26,5 +26,5 @@ export async function searchResources(
   if (result.status >= 400) {
     throw new Error(`Failed to load resources: ${result.status}`);
   }
-  return result.data.data;
+  return result.data.data as unknown as ResourceWithAvailability[];
 }
