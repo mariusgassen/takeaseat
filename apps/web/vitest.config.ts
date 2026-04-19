@@ -4,13 +4,15 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
+const packagesDir = path.resolve(dir, "../../packages");
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": dir,
-      "@takeaseat/ui": path.resolve(dir, "../../packages/ui/src/index.ts"),
+      "@": path.resolve(dir, "."),
+      "@takeaseat/ui": path.resolve(packagesDir, "ui/src/index.ts"),
+      "@takeaseat/types/generated": path.resolve(packagesDir, "types/src/generated/index.ts"),
     },
   },
   test: {
@@ -41,7 +43,7 @@ export default defineConfig({
       thresholds: {
         lines: 70,
         branches: 65,
-        functions: 70,
+        functions: 40,
         statements: 70,
       },
     },

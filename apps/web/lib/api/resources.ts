@@ -1,10 +1,5 @@
 import type { ResourceSearchFilters, ResourceWithAvailability } from "./types";
-
-interface ListResponse {
-  data: ResourceWithAvailability[];
-  has_more: boolean;
-  next_cursor: string | null;
-}
+import { apiListResources } from "./client";
 
 export function buildSearchQuery(filters: ResourceSearchFilters): string {
   const params = new URLSearchParams();
@@ -24,9 +19,12 @@ export async function searchResources(
   filters: ResourceSearchFilters,
   signal?: AbortSignal
 ): Promise<ResourceWithAvailability[]> {
-  const qs = buildSearchQuery(filters);
-  const res = await fetch(`/api/mock/resources${qs ? `?${qs}` : ""}`, { signal });
-  if (!res.ok) throw new Error(`Failed to load resources: ${res.status}`);
-  const json = (await res.json()) as ListResponse;
-  return json.data;
+  const result = await apiListResources(filters, { signal });
+  if (result.status === 401) {
+    throw new Error("Unauthorized");
+  }
+  if (result.status >= 400) {
+    throw new Error(`Failed to load resources: ${result.status}`);
+  }
+  return result.data.data as unknown as ResourceWithAvailability[];
 }

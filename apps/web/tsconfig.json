@@ -7,7 +7,9 @@
     "paths": {
       "@/*": ["./*"],
       "@takeaseat/ui": ["../../packages/ui/src/index.ts"],
-      "@takeaseat/ui/*": ["../../packages/ui/src/*"]
+      "@takeaseat/ui/*": ["../../packages/ui/src/*"],
+      "@takeaseat/types/generated": ["../../packages/types/src/generated/index.ts"],
+      "@takeaseat/types/generated/*": ["../../packages/types/src/generated/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

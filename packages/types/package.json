@@ -3,7 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "main": "./src/generated/index.ts",
+  "exports": {
+    ".": "./src/generated/index.ts",
+    "./generated": "./src/generated/index.ts",
+    "./generated/*": "./src/generated/*"
+  },
   "scripts": {
     "generate": "orval"
+  },
+  "devDependencies": {
+    "orval": "^6.29.0",
+    "prettier": "^3.8.3"
   }
 }
