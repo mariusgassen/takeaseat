@@ -25,6 +25,9 @@ jobs:
 
       - run: npm ci --no-audit --no-fund
 
+      - name: Generate @takeaseat/types
+        run: npm run generate --workspace=@takeaseat/types
+
       - name: Build @takeaseat/ui
         run: npm run build --workspace=@takeaseat/ui
 
