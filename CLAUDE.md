@@ -81,15 +81,18 @@ that apply to every PR:
    `apps/web/lib/mocks/`.
 5. **Tools.** Vitest + React Testing Library (jsdom). One config per
    workspace. No new test runner without a discussion.
-6. **Coverage floors enforced in CI** (vitest threshold + Codecov):
+6. **Coverage floors enforced in CI** (vitest `thresholds` — fail the
+   CI job if a workspace drops below):
    - `packages/ui` — 80 % lines / 75 % branches.
    - `apps/web`   — 70 % lines / 65 % branches.
    Excludes: thin Radix wrappers, generated types, mock fixtures,
    `page.tsx`/`layout.tsx` shells, navigation chrome.
 7. **No flaky tests.** A flaky test is broken — fix or delete.
 8. **Verification before "done":** run the workspace's `test` and
-   `typecheck` scripts. CI runs `web-ci` on every PR touching the
-   web stack.
+   `typecheck` scripts. CI (`.github/workflows/ci.yml`) runs
+   frontend + backend + app jobs on every PR; coverage SVG badges
+   are regenerated and published to the `badges` branch on pushes
+   to `main`.
 9. **When changing a component**, update or add a test in the same
    commit. Don't tack tests on later.
 10. **Snapshots are last resort** — only for stable, low-churn
