@@ -5,5 +5,9 @@
   "main": "./src/generated/index.ts",
   "scripts": {
     "generate": "orval"
+  },
+  "devDependencies": {
+    "orval": "^8.8.0",
+    "prettier": "^3.8.3"
   }
 }
