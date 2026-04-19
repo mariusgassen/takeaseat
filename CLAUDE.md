@@ -169,7 +169,7 @@ npm run test:watch --workspace=@takeaseat/ui
 - [ ] Usage-based billing (optional)
 
 ### Tech Stack
-- **Web:** Next.js 16 (App Router), TypeScript 6, Tailwind CSS v4.2, shadcn/ui
+- **Web:** Next.js 16, TypeScript 7, Tailwind CSS v4.2, shadcn/ui
 - **Mobile:** Expo SDK 55, NativeWind v5
 - **Backend:** Go 1.26 (Chi router 5, sqlc 1.30, pgx)
 - **API contract:** OpenAPI 3 spec → orval → generated TS clients

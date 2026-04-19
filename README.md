@@ -14,7 +14,7 @@ Self-hosted workspace reservation system. Book meeting rooms, desks, parking spo
 | API      | Go 1.26, Chi 5, pgx/v5, sqlc 1.30                    |
 | Auth     | Zitadel 4 (self-hosted) — local, OAuth2, OIDC, SAML  |
 | DB       | PostgreSQL 18 + PostGIS, Redis 8                     |
-| Web      | Next.js 16, TypeScript 6, Tailwind CSS v4, shadcn/ui |
+| Web      | Next.js 16, TypeScript 7, Tailwind CSS v4, shadcn/ui |
 | Mobile   | Expo SDK 55, NativeWind v5                           |
 | Monorepo | Turborepo 2.9                                        |
 | Deploy   | Docker Compose                                       |
@@ -42,7 +42,7 @@ takeaseat/
 
 - Docker + Docker Compose
 - Go 1.26
-- Node.js 22+
+- Node.js 25+
 - npm 10+
 
 ### Run locally
