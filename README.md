@@ -1,8 +1,9 @@
 # Take A Seat
 
-[![web-ci](https://github.com/mariusgassen/takeaseat/actions/workflows/web-ci.yml/badge.svg?branch=main)](https://github.com/mariusgassen/takeaseat/actions/workflows/web-ci.yml)
-[![coverage – ui](https://codecov.io/gh/mariusgassen/takeaseat/branch/main/graph/badge.svg?flag=ui)](https://codecov.io/gh/mariusgassen/takeaseat?flags%5B0%5D=ui)
-[![coverage – web](https://codecov.io/gh/mariusgassen/takeaseat/branch/main/graph/badge.svg?flag=web)](https://codecov.io/gh/mariusgassen/takeaseat?flags%5B0%5D=web)
+[![ci](https://github.com/mariusgassen/takeaseat/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mariusgassen/takeaseat/actions/workflows/ci.yml)
+[![frontend](https://raw.githubusercontent.com/mariusgassen/takeaseat/badges/frontend.svg)](https://github.com/mariusgassen/takeaseat/actions/workflows/ci.yml)
+[![backend](https://raw.githubusercontent.com/mariusgassen/takeaseat/badges/backend.svg)](https://github.com/mariusgassen/takeaseat/actions/workflows/ci.yml)
+[![app](https://raw.githubusercontent.com/mariusgassen/takeaseat/badges/app.svg)](https://github.com/mariusgassen/takeaseat/actions/workflows/ci.yml)
 
 Self-hosted workspace reservation system. Book meeting rooms, desks, parking spots, and equipment. Multi-tenant, role-based, SSO-ready.
 
@@ -102,9 +103,13 @@ npm test --workspaces                    # all
 npm run test:coverage --workspace=@takeaseat/web
 ```
 
-CI: [`.github/workflows/web-ci.yml`](./.github/workflows/web-ci.yml)
-runs lint, typecheck, test, build for every PR touching the web stack
-and uploads coverage to Codecov with per-package flags (`ui`, `web`).
+CI: [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) runs
+typecheck, test, build for the frontend (`@takeaseat/ui` +
+`@takeaseat/web`) and `go vet`/`go test` for the backend on every
+PR. On `push` to `main` it regenerates the coverage SVG badges
+(`frontend`, `backend`, `app`) directly in the workflow and
+publishes them to the orphan `badges` branch — no external coverage
+service, no secrets.
 
 ## License
 

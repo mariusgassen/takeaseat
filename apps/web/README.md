@@ -3,8 +3,8 @@
 Next.js 15 App Router web client for Take A Seat. Workspace booking
 UI: search resources, book rooms / desks / parking / equipment.
 
-[![web-ci](https://github.com/mariusgassen/takeaseat/actions/workflows/web-ci.yml/badge.svg?branch=main)](https://github.com/mariusgassen/takeaseat/actions/workflows/web-ci.yml)
-[![coverage – web](https://codecov.io/gh/mariusgassen/takeaseat/branch/main/graph/badge.svg?flag=web)](https://codecov.io/gh/mariusgassen/takeaseat?flags%5B0%5D=web)
+[![ci](https://github.com/mariusgassen/takeaseat/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mariusgassen/takeaseat/actions/workflows/ci.yml)
+[![frontend](https://raw.githubusercontent.com/mariusgassen/takeaseat/badges/frontend.svg)](https://github.com/mariusgassen/takeaseat/actions/workflows/ci.yml)
 
 ## Quick start
 

@@ -3,7 +3,7 @@
 Shared UI primitives + design tokens for the Take A Seat web client
 (and, eventually, mobile shared composites).
 
-[![coverage – ui](https://codecov.io/gh/mariusgassen/takeaseat/branch/main/graph/badge.svg?flag=ui)](https://codecov.io/gh/mariusgassen/takeaseat?flags%5B0%5D=ui)
+[![frontend](https://raw.githubusercontent.com/mariusgassen/takeaseat/badges/frontend.svg)](https://github.com/mariusgassen/takeaseat/actions/workflows/ci.yml)
 
 ## What's in the box
 

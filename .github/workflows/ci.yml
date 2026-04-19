@@ -1,0 +1,249 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    outputs:
+      coverage: ${{ steps.pct.outputs.pct }}
+      status: ${{ steps.result.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Build @takeaseat/ui
+        run: npm run build --workspace=@takeaseat/ui
+
+      - name: Typecheck @takeaseat/web
+        run: npm run typecheck --workspace=@takeaseat/web
+
+      - name: Test @takeaseat/ui (coverage)
+        run: npm run test:coverage --workspace=@takeaseat/ui
+
+      - name: Test @takeaseat/web (coverage)
+        run: npm run test:coverage --workspace=@takeaseat/web
+
+      - name: Build @takeaseat/web
+        run: npm run build --workspace=@takeaseat/web
+
+      - name: Compute combined coverage %
+        id: pct
+        run: |
+          pct=$(node scripts/coverage-pct.mjs \
+            packages/ui/coverage/coverage-summary.json \
+            apps/web/coverage/coverage-summary.json)
+          echo "frontend coverage: $pct%"
+          echo "pct=$pct" >> "$GITHUB_OUTPUT"
+
+      - name: Record result
+        id: result
+        if: always()
+        run: echo "status=${{ job.status }}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate frontend badge
+        if: always()
+        run: |
+          mkdir -p badges
+          if [ "${{ job.status }}" = "success" ]; then
+            node scripts/make-badge.mjs \
+              --label frontend \
+              --value "${{ steps.pct.outputs.pct }}%" \
+              --out badges/frontend.svg
+          else
+            node scripts/make-badge.mjs \
+              --label frontend \
+              --status failing \
+              --out badges/frontend.svg
+          fi
+
+      - name: Upload frontend badge
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: badge-frontend
+          path: badges/frontend.svg
+          retention-days: 30
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: |
+            packages/ui/coverage
+            apps/web/coverage
+          retention-days: 14
+
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test with coverage
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+
+      - name: Compute backend coverage %
+        id: pct
+        run: |
+          raw=$(go tool cover -func=coverage.out | tail -n 1 | awk '{print $3}')
+          pct=${raw%.*}
+          pct=${pct%\%}
+          echo "backend coverage: $pct%"
+          echo "pct=$pct" >> "$GITHUB_OUTPUT"
+
+      - name: Generate backend badge
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          mkdir -p badges
+          if [ "${{ job.status }}" = "success" ]; then
+            node scripts/make-badge.mjs \
+              --label backend \
+              --value "${{ steps.pct.outputs.pct }}%" \
+              --out badges/backend.svg
+          else
+            node scripts/make-badge.mjs \
+              --label backend \
+              --status failing \
+              --out badges/backend.svg
+          fi
+
+      - name: Upload backend badge
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: badge-backend
+          path: badges/backend.svg
+          retention-days: 30
+
+  app:
+    name: app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Verify @takeaseat/mobile workspace
+        run: |
+          name=$(npm pkg get name -w @takeaseat/mobile | tr -d '"' | tr -d ' \n')
+          test "$name" = "@takeaseat/mobile"
+
+      - name: Generate app badge
+        if: always()
+        run: |
+          mkdir -p badges
+          if [ "${{ job.status }}" = "success" ]; then
+            node scripts/make-badge.mjs \
+              --label app \
+              --status passing \
+              --out badges/app.svg
+          else
+            node scripts/make-badge.mjs \
+              --label app \
+              --status failing \
+              --out badges/app.svg
+          fi
+
+      - name: Upload app badge
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: badge-app
+          path: badges/app.svg
+          retention-days: 30
+
+  publish-badges:
+    name: publish badges
+    needs: [frontend, backend, app]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download frontend badge
+        uses: actions/download-artifact@v4
+        with:
+          name: badge-frontend
+          path: badges
+
+      - name: Download backend badge
+        uses: actions/download-artifact@v4
+        with:
+          name: badge-backend
+          path: badges
+
+      - name: Download app badge
+        uses: actions/download-artifact@v4
+        with:
+          name: badge-app
+          path: badges
+
+      - name: Commit to badges branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Stash badges outside the work tree before switching branches.
+          tmp=$(mktemp -d)
+          cp badges/*.svg "$tmp/"
+
+          # Fetch or create the orphan 'badges' branch.
+          if git ls-remote --exit-code --heads origin badges >/dev/null 2>&1; then
+            git fetch origin badges
+            git checkout -B badges origin/badges
+            git rm -rf . >/dev/null 2>&1 || true
+            git clean -fdx
+          else
+            git checkout --orphan badges
+            git rm -rf . >/dev/null 2>&1 || true
+            git clean -fdx
+          fi
+
+          cp "$tmp"/*.svg .
+          git add *.svg
+
+          if git diff --cached --quiet; then
+            echo "no badge changes; skipping commit"
+            exit 0
+          fi
+
+          git commit -m "ci: update badges (${GITHUB_SHA:0:7})"
+          git push origin badges
