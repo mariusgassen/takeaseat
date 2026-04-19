@@ -3,10 +3,10 @@ WORKDIR /app
 COPY go.mod ./
 RUN go mod download
 COPY . .
-RUN go build -o bin/api ./...
+RUN go build -o api .
 
 FROM alpine:3.21
 WORKDIR /app
-COPY --from=builder /app/bin/api .
+COPY --from=builder /app/api .
 EXPOSE 8000
 CMD ["./api"]
