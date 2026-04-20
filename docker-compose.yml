@@ -52,6 +52,7 @@ services:
     environment:
       POSTGRES_URL: postgres://takeaseat:takeaseat@postgres:5432/takeaseat
       REDIS_URL: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       ZITADEL_ISSUER_URL: http://zitadel:8080
       API_PORT: "8000"
     depends_on:
