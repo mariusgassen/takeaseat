@@ -1,13 +1,13 @@
 services:
   postgres:
-    image: postgis/postgis:18-3.5
+    image: postgis/postgis:18-3.6
     restart: unless-stopped
     environment:
       POSTGRES_USER: takeaseat
       POSTGRES_PASSWORD: takeaseat
       POSTGRES_DB: takeaseat
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U takeaseat -d takeaseat"]
       interval: 5s
