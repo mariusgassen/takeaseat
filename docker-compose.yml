@@ -28,7 +28,7 @@ services:
       retries: 5
 
   zitadel:
-    image: ghcr.io/zitadel/zitadel:v2
+    image: ghcr.io/zitadel/zitadel:v4.13.1
     restart: on-failure
     command: start-from-init --masterkey "zitadel-default-master-key-change-in-prod" --tlsMode disabled
     environment:
