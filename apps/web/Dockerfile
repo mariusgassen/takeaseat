@@ -10,6 +10,7 @@ RUN npm ci
 
 COPY . .
 
+RUN npm run generate --workspace=@takeaseat/types
 RUN npm run build --workspace=@takeaseat/web
 
 FROM node:25-alpine
