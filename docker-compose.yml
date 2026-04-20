@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgis/postgis:18-3.5-alpine
+    image: postgis/postgis:18-3.5
     restart: unless-stopped
     environment:
       POSTGRES_USER: takeaseat
