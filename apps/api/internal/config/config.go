@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -13,12 +15,30 @@ type Config struct {
 }
 
 func Load() *Config {
+	redisURL := buildRedisURL(
+		getEnv("REDIS_URL", "redis://localhost:6379"),
+		os.Getenv("REDIS_PASSWORD"),
+	)
 	return &Config{
 		PostgresURL:      getEnv("POSTGRES_URL", "postgres://takeaseat:takeaseat@localhost:5432/takeaseat"),
-		RedisURL:         getEnv("REDIS_URL", "redis://localhost:6379"),
+		RedisURL:         redisURL,
 		ZitadelIssuerURL: getEnv("ZITADEL_ISSUER_URL", "http://localhost:8080"),
 		Port:             getEnv("API_PORT", "8000"),
 	}
+}
+
+// buildRedisURL embeds the password into the Redis URL when REDIS_PASSWORD is set.
+// This keeps credential management consistent with the URL-based approach used elsewhere.
+func buildRedisURL(rawURL, password string) string {
+	if password == "" {
+		return rawURL
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Sprintf("redis://:%s@%s", url.PathEscape(password), strings.TrimPrefix(rawURL, "redis://"))
+	}
+	u.User = url.UserPassword("", password)
+	return u.String()
 }
 
 func getEnv(key, fallback string) string {

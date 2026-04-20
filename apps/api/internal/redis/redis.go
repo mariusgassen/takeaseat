@@ -12,9 +12,11 @@ type Client struct {
 }
 
 func New(url string) (*Client, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr: url,
-	})
+	opts, err := redis.ParseURL(url)
+	if err != nil {
+		return nil, err
+	}
+	client := redis.NewClient(opts)
 	ctx := context.Background()
 	if err := client.Ping(ctx).Err(); err != nil {
 		return nil, err
