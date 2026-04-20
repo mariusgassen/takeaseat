@@ -26,7 +26,7 @@ services:
   zitadel:
     image: ghcr.io/zitadel/zitadel:v4.13.1
     restart: on-failure
-    command: start-from-init --tlsMode disabled
+    command: start-from-init --masterkeyFromEnv --tlsMode disabled
     environment:
       ZITADEL_MASTERKEY: ${ZITADEL_MASTERKEY}
       ZITADEL_DATABASE_POSTGRES_HOST: postgres
