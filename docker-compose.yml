@@ -8,8 +8,6 @@ services:
       POSTGRES_DB: takeaseat
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U takeaseat -d takeaseat"]
       interval: 5s
@@ -19,8 +17,6 @@ services:
   redis:
     image: redis:8-alpine
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -60,8 +56,6 @@ services:
       REDIS_URL: redis://redis:6379
       ZITADEL_ISSUER_URL: http://zitadel:8080
       API_PORT: "8000"
-    ports:
-      - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
