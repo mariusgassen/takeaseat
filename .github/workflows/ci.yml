@@ -202,19 +202,19 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download frontend badge
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: badge-frontend
           path: badges
 
       - name: Download backend badge
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: badge-backend
           path: badges
 
       - name: Download app badge
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: badge-app
           path: badges
