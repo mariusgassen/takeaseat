@@ -1,10 +1,16 @@
 FROM node:25-alpine AS builder
 WORKDIR /app
 
+COPY package.json package-lock.json ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/types/package.json ./packages/types/
+
+RUN npm ci
+
 COPY . .
 
-RUN npm install
-RUN npm run build
+RUN npm run build --workspace=@takeaseat/web
 
 FROM node:25-alpine
 WORKDIR /app
