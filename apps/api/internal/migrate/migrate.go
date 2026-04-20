@@ -10,26 +10,27 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var migrations = []string{
-	"001_extensions.up.sql",
-	"002_roles.up.sql",
-	"003_schema.up.sql",
-	"004_rls.up.sql",
-	"005_features.up.sql",
-}
-
 func Run(pool *pgxpool.Pool) error {
 	ctx := context.Background()
 
-	for _, name := range migrations {
-		sql, err := os.ReadFile(filepath.Join("migrations", name))
+	entries, err := os.ReadDir("migrations")
+	if err != nil {
+		return fmt.Errorf("read migrations dir: %w", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".up.sql") {
+			continue
+		}
+
+		sql, err := os.ReadFile(filepath.Join("migrations", entry.Name()))
 		if err != nil {
-			return fmt.Errorf("read %s: %w", name, err)
+			return fmt.Errorf("read %s: %w", entry.Name(), err)
 		}
 
 		if _, err := pool.Exec(ctx, string(sql)); err != nil {
 			if !isAlreadyExists(err) {
-				return fmt.Errorf("%s: %w", name, err)
+				return fmt.Errorf("%s: %w", entry.Name(), err)
 			}
 		}
 	}
