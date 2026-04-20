@@ -28,7 +28,8 @@ func Run(pool *pgxpool.Pool) error {
 			return fmt.Errorf("read %s: %w", entry.Name(), err)
 		}
 
-		if _, err := pool.Exec(ctx, string(sql)); err != nil {
+		up := upSection(string(sql))
+		if _, err := pool.Exec(ctx, up); err != nil {
 			if !isAlreadyExists(err) {
 				return fmt.Errorf("%s: %w", entry.Name(), err)
 			}
@@ -39,6 +40,13 @@ func Run(pool *pgxpool.Pool) error {
 }
 
 func isAlreadyExists(err error) bool {
-	msg := err.Error()
-	return strings.Contains(msg, "already exists")
+	return strings.Contains(err.Error(), "already exists")
+}
+
+// upSection returns only the SQL before the -- migrate:down marker.
+func upSection(sql string) string {
+	if idx := strings.Index(sql, "-- migrate:down"); idx != -1 {
+		return sql[:idx]
+	}
+	return sql
 }
