@@ -13,27 +13,32 @@ import (
 func Run(pool *pgxpool.Pool) error {
 	ctx := context.Background()
 
-	schema, err := os.ReadFile(filepath.Join("migrations", "003_schema.up.sql"))
+	entries, err := os.ReadDir("migrations")
 	if err != nil {
-		return fmt.Errorf("read schema: %w", err)
+		return fmt.Errorf("read migrations dir: %w", err)
 	}
 
-	if _, err := pool.Exec(ctx, string(schema)); err != nil {
-		if !strings.Contains(err.Error(), "already exists") {
-			return fmt.Errorf("schema: %w", err)
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".up.sql") {
+			continue
 		}
-	}
 
-	rls, err := os.ReadFile(filepath.Join("migrations", "004_rls.up.sql"))
-	if err != nil {
-		return fmt.Errorf("read rls: %w", err)
-	}
+		sql, err := os.ReadFile(filepath.Join("migrations", entry.Name()))
+		if err != nil {
+			return fmt.Errorf("read %s: %w", entry.Name(), err)
+		}
 
-	if _, err := pool.Exec(ctx, string(rls)); err != nil {
-		if !strings.Contains(err.Error(), "already exists") {
-			return fmt.Errorf("rls: %w", err)
+		if _, err := pool.Exec(ctx, string(sql)); err != nil {
+			if !isAlreadyExists(err) {
+				return fmt.Errorf("%s: %w", entry.Name(), err)
+			}
 		}
 	}
 
 	return nil
+}
+
+func isAlreadyExists(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "already exists")
 }
