@@ -9,6 +9,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  cn,
 } from "@takeaseat/ui";
 import type { ResourceWithAvailability } from "@/lib/api/types";
 import { TYPE_META } from "./type-meta";
@@ -31,23 +32,35 @@ export function ResourceCard({ resource, onBook }: ResourceCardProps) {
       : t.resourceCard.seats.replace("{{n}}", String(resource.capacity));
 
   return (
-    <Card className="flex h-full flex-col">
-      <CardHeader className="flex-row items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <span className="flex size-10 items-center justify-center rounded-md bg-accent-soft text-accent">
-            <Icon className="size-5" />
-          </span>
-          <div className="space-y-1">
-            <CardTitle>{resource.name}</CardTitle>
-            <p className="text-xs uppercase tracking-wide text-fg-muted">
-              {t.types[resource.type].label}
-            </p>
+    <Card
+      className={cn(
+        "flex h-full flex-col overflow-hidden border-t-[3px] transition-shadow hover:shadow-md",
+        meta.borderClass
+      )}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span
+              className={cn(
+                "flex size-10 shrink-0 items-center justify-center rounded-xl",
+                meta.iconClass
+              )}
+            >
+              <Icon className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <CardTitle className="truncate">{resource.name}</CardTitle>
+              <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-fg-muted">
+                {t.types[resource.type].label}
+              </p>
+            </div>
           </div>
+          <AvailabilityBadge resource={resource} />
         </div>
-        <AvailabilityBadge resource={resource} />
       </CardHeader>
 
-      <CardContent className="flex flex-1 flex-col gap-3">
+      <CardContent className="flex flex-1 flex-col gap-3 pb-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-fg-muted">
           <span className="inline-flex items-center gap-1.5">
             <Users className="size-3.5" />
@@ -71,12 +84,13 @@ export function ResourceCard({ resource, onBook }: ResourceCardProps) {
         ) : null}
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="border-t border-border pt-3">
         <NextSlotHint resource={resource} />
         <Button
           size="sm"
           variant={resource.is_available_now ? "default" : "outline"}
           onClick={() => onBook(resource)}
+          className="shrink-0"
         >
           {resource.is_available_now ? t.resourceCard.bookNow : t.resourceCard.viewSlots}
         </Button>

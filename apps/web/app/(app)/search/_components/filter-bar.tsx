@@ -13,6 +13,7 @@ import {
   Separator,
   ToggleGroup,
   ToggleGroupItem,
+  cn,
 } from "@takeaseat/ui";
 import { useSearchFilters } from "@/lib/hooks/use-search-filters";
 import { ALL_AMENITIES, ALL_FLOORS } from "@/lib/mocks/resources";
@@ -45,47 +46,56 @@ export function FilterBar() {
     activeAmenities.length;
 
   return (
-    <div className="sticky top-14 z-20 -mx-4 border-b border-border bg-bg/85 px-4 py-4 backdrop-blur md:-mx-8 md:px-8 supports-[padding:max(0px)]:pl-[max(1rem,env(safe-area-inset-left))] supports-[padding:max(0px)]:pr-[max(1rem,env(safe-area-inset-right))]">
+    <div className="sticky top-14 z-20 -mx-4 border-b border-border bg-bg/90 px-4 py-3 backdrop-blur md:-mx-8 md:px-8 supports-[padding:max(0px)]:pl-[max(1rem,env(safe-area-inset-left))] supports-[padding:max(0px)]:pr-[max(1rem,env(safe-area-inset-right))]">
       <div className="mx-auto flex max-w-6xl flex-col gap-3">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        {/* Search row */}
+        <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-muted" />
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-fg-muted" />
             <Input
               aria-label="Search resources"
               placeholder={t.search.placeholder}
-              className="pl-9"
+              className="rounded-full pl-10 pr-4"
               value={qLocal}
               onChange={(e) => setQLocal(e.target.value)}
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="md" className="gap-2">
-                  <SlidersHorizontal className="size-4" />
-                  {t.search.filters}
-                  {activeFilterCount > 0 ? (
-                    <Badge variant="accent" className="ml-1">
-                      {activeFilterCount}
-                    </Badge>
-                  ) : null}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-80">
-                <FilterPopover />
-              </PopoverContent>
-            </Popover>
-
-            {activeFilterCount > 0 ? (
-              <Button variant="ghost" size="sm" onClick={reset} className="gap-1.5">
-                <X className="size-3.5" /> {t.search.clear}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={activeFilterCount > 0 ? "subtle" : "outline"}
+                size="md"
+                className="shrink-0 gap-2 rounded-full"
+              >
+                <SlidersHorizontal className="size-4" />
+                <span className="hidden sm:inline">{t.search.filters}</span>
+                {activeFilterCount > 0 ? (
+                  <span className="flex size-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-fg">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
               </Button>
-            ) : null}
-          </div>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80">
+              <FilterPopover />
+            </PopoverContent>
+          </Popover>
+
+          {activeFilterCount > 0 ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={reset}
+              className="shrink-0 gap-1 rounded-full px-3 text-fg-muted"
+            >
+              <X className="size-3.5" />
+              <span className="hidden sm:inline">{t.search.clear}</span>
+            </Button>
+          ) : null}
         </div>
 
-        {/* Horizontally scrollable type toggle — prevents wrapping on mobile */}
+        {/* Type tabs — horizontal scroll, pill style */}
         <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8">
           <ToggleGroup
             type="single"
@@ -94,18 +104,25 @@ export function FilterBar() {
               update({ type: (value || undefined) as ResourceType | undefined })
             }
             aria-label="Resource type"
-            className="w-max"
+            className="w-max gap-2 border-0 bg-transparent p-0"
           >
             {TYPE_ORDER.map((type) => {
               const meta = TYPE_META[type];
               const Icon = meta.icon;
+              const active = filters.type === type;
               return (
                 <ToggleGroupItem
                   key={type}
                   value={type}
                   aria-label={t.types[type].pluralLabel}
+                  className={cn(
+                    "h-9 rounded-full border px-4 text-sm font-medium transition-all",
+                    active
+                      ? "border-accent bg-accent text-accent-fg data-[state=on]:bg-accent data-[state=on]:text-accent-fg"
+                      : "border-border bg-surface text-fg-muted hover:text-fg data-[state=on]:bg-accent-soft data-[state=on]:text-accent"
+                  )}
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-3.5" />
                   {t.types[type].pluralLabel}
                 </ToggleGroupItem>
               );
@@ -113,6 +130,7 @@ export function FilterBar() {
           </ToggleGroup>
         </div>
 
+        {/* Active amenity chips */}
         {activeAmenities.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-fg-muted">
@@ -124,7 +142,10 @@ export function FilterBar() {
                 {localizeAmenity(slug, t.amenities)}
                 <button
                   type="button"
-                  aria-label={t.search.removeAmenity.replace("{{name}}", localizeAmenity(slug, t.amenities))}
+                  aria-label={t.search.removeAmenity.replace(
+                    "{{name}}",
+                    localizeAmenity(slug, t.amenities)
+                  )}
                   className="-mr-1 rounded-sm opacity-70 hover:opacity-100"
                   onClick={() =>
                     update({ amenities: activeAmenities.filter((a) => a !== slug) })
