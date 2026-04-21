@@ -12,11 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@takeaseat/ui";
 import { useAuth } from "@/lib/auth/mock-auth";
+import { useLocale } from "@/lib/i18n/context";
 
 export function Topbar() {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const { locale, setLocale, t } = useLocale();
 
   function handleSignOut() {
     signOut();
@@ -34,13 +36,25 @@ export function Topbar() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
-          <DropdownMenuItem disabled>{user?.tenantName ?? "Demo"} (current)</DropdownMenuItem>
-          <DropdownMenuItem disabled>Add workspace…</DropdownMenuItem>
+          <DropdownMenuLabel>{t.topbar.workspaces}</DropdownMenuLabel>
+          <DropdownMenuItem disabled>
+            {user?.tenantName ?? "Demo"} {t.topbar.current}
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled>{t.topbar.addWorkspace}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <div className="flex items-center gap-1.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="px-2 font-semibold tracking-wide"
+          aria-label={locale === "en" ? t.topbar.switchToDE : t.topbar.switchToEN}
+          onClick={() => setLocale(locale === "en" ? "de" : "en")}
+        >
+          {locale === "en" ? "DE" : "EN"}
+        </Button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Theme">
@@ -55,13 +69,13 @@ export function Topbar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => setTheme("light")}>
-              <Sun className="size-4" /> Light
+              <Sun className="size-4" /> {t.topbar.themeLight}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setTheme("dark")}>
-              <Moon className="size-4" /> Dark
+              <Moon className="size-4" /> {t.topbar.themeDark}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setTheme("system")}>
-              <Monitor className="size-4" /> System
+              <Monitor className="size-4" /> {t.topbar.themeSystem}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -82,10 +96,10 @@ export function Topbar() {
             <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled>
-              <UserIcon className="size-4" /> Profile
+              <UserIcon className="size-4" /> {t.topbar.profile}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={handleSignOut}>
-              <LogOut className="size-4" /> Sign out
+              <LogOut className="size-4" /> {t.topbar.signOut}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

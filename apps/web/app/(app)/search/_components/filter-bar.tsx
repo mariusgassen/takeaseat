@@ -17,10 +17,12 @@ import {
 import { useSearchFilters } from "@/lib/hooks/use-search-filters";
 import { ALL_AMENITIES, ALL_FLOORS } from "@/lib/mocks/resources";
 import type { ResourceType } from "@/lib/api/types";
-import { TYPE_META, TYPE_ORDER, formatAmenity, formatFloor } from "./type-meta";
+import { TYPE_META, TYPE_ORDER } from "./type-meta";
+import { useLocale, localizeAmenity } from "@/lib/i18n/context";
 
 export function FilterBar() {
   const { filters, update, reset } = useSearchFilters();
+  const { t } = useLocale();
   const [qLocal, setQLocal] = React.useState(filters.q ?? "");
 
   React.useEffect(() => {
@@ -43,14 +45,14 @@ export function FilterBar() {
     activeAmenities.length;
 
   return (
-    <div className="sticky top-14 z-20 -mx-4 border-b border-border bg-bg/85 px-4 py-4 backdrop-blur md:-mx-8 md:px-8">
+    <div className="sticky top-14 z-20 -mx-4 border-b border-border bg-bg/85 px-4 py-4 backdrop-blur md:-mx-8 md:px-8 supports-[padding:max(0px)]:pl-[max(1rem,env(safe-area-inset-left))] supports-[padding:max(0px)]:pr-[max(1rem,env(safe-area-inset-right))]">
       <div className="mx-auto flex max-w-6xl flex-col gap-3">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="relative flex-1">
             <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-muted" />
             <Input
               aria-label="Search resources"
-              placeholder="Search by name or amenity…"
+              placeholder={t.search.placeholder}
               className="pl-9"
               value={qLocal}
               onChange={(e) => setQLocal(e.target.value)}
@@ -62,7 +64,7 @@ export function FilterBar() {
               <PopoverTrigger asChild>
                 <Button variant="outline" size="md" className="gap-2">
                   <SlidersHorizontal className="size-4" />
-                  Filters
+                  {t.search.filters}
                   {activeFilterCount > 0 ? (
                     <Badge variant="accent" className="ml-1">
                       {activeFilterCount}
@@ -77,45 +79,52 @@ export function FilterBar() {
 
             {activeFilterCount > 0 ? (
               <Button variant="ghost" size="sm" onClick={reset} className="gap-1.5">
-                <X className="size-3.5" /> Clear
+                <X className="size-3.5" /> {t.search.clear}
               </Button>
             ) : null}
           </div>
         </div>
 
-        <ToggleGroup
-          type="single"
-          value={filters.type ?? ""}
-          onValueChange={(value) =>
-            update({ type: (value || undefined) as ResourceType | undefined })
-          }
-          aria-label="Resource type"
-          className="self-start"
-        >
-          {TYPE_ORDER.map((type) => {
-            const meta = TYPE_META[type];
-            const Icon = meta.icon;
-            return (
-              <ToggleGroupItem key={type} value={type} aria-label={meta.pluralLabel}>
-                <Icon className="size-4" />
-                {meta.pluralLabel}
-              </ToggleGroupItem>
-            );
-          })}
-        </ToggleGroup>
+        {/* Horizontally scrollable type toggle — prevents wrapping on mobile */}
+        <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:-mx-8 md:px-8">
+          <ToggleGroup
+            type="single"
+            value={filters.type ?? ""}
+            onValueChange={(value) =>
+              update({ type: (value || undefined) as ResourceType | undefined })
+            }
+            aria-label="Resource type"
+            className="w-max"
+          >
+            {TYPE_ORDER.map((type) => {
+              const meta = TYPE_META[type];
+              const Icon = meta.icon;
+              return (
+                <ToggleGroupItem
+                  key={type}
+                  value={type}
+                  aria-label={t.types[type].pluralLabel}
+                >
+                  <Icon className="size-4" />
+                  {t.types[type].pluralLabel}
+                </ToggleGroupItem>
+              );
+            })}
+          </ToggleGroup>
+        </div>
 
         {activeAmenities.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-fg-muted">
               <Filter className="mr-1 inline size-3.5" />
-              Amenities:
+              {t.search.amenitiesLabel}
             </span>
             {activeAmenities.map((slug) => (
               <Badge key={slug} variant="accent" className="gap-1">
-                {formatAmenity(slug)}
+                {localizeAmenity(slug, t.amenities)}
                 <button
                   type="button"
-                  aria-label={`Remove ${slug}`}
+                  aria-label={t.search.removeAmenity.replace("{{name}}", localizeAmenity(slug, t.amenities))}
                   className="-mr-1 rounded-sm opacity-70 hover:opacity-100"
                   onClick={() =>
                     update({ amenities: activeAmenities.filter((a) => a !== slug) })
@@ -134,6 +143,7 @@ export function FilterBar() {
 
 function FilterPopover() {
   const { filters, update } = useSearchFilters();
+  const { t } = useLocale();
   const activeAmenities = filters.amenities ?? [];
 
   function toggleAmenity(slug: string) {
@@ -146,7 +156,7 @@ function FilterPopover() {
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="filter-capacity">Min capacity</Label>
+        <Label htmlFor="filter-capacity">{t.search.minCapacity}</Label>
         <Input
           id="filter-capacity"
           type="number"
@@ -161,7 +171,7 @@ function FilterPopover() {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="filter-floor">Floor</Label>
+        <Label htmlFor="filter-floor">{t.search.floor}</Label>
         <SelectNative
           id="filter-floor"
           value={filters.floor !== undefined ? String(filters.floor) : ""}
@@ -169,10 +179,14 @@ function FilterPopover() {
             update({ floor: e.target.value === "" ? undefined : Number(e.target.value) })
           }
         >
-          <option value="">Any floor</option>
+          <option value="">{t.search.anyFloor}</option>
           {ALL_FLOORS.map((floor) => (
             <option key={floor} value={floor}>
-              {formatFloor(floor)}
+              {floor === 0
+                ? t.floors.ground
+                : floor < 0
+                  ? t.floors.basement.replace("{{n}}", String(Math.abs(floor)))
+                  : t.floors.floor.replace("{{n}}", String(floor))}
             </option>
           ))}
         </SelectNative>
@@ -181,7 +195,7 @@ function FilterPopover() {
       <Separator />
 
       <div className="space-y-2">
-        <Label>Amenities</Label>
+        <Label>{t.search.amenitiesLabel.replace(":", "")}</Label>
         <div className="flex flex-wrap gap-1.5">
           {ALL_AMENITIES.map((slug) => {
             const active = activeAmenities.includes(slug);
@@ -197,7 +211,7 @@ function FilterPopover() {
                     : "rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-medium text-fg-muted hover:text-fg"
                 }
               >
-                {formatAmenity(slug)}
+                {localizeAmenity(slug, t.amenities)}
               </button>
             );
           })}

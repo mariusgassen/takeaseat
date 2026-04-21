@@ -10,21 +10,23 @@ import {
 } from "lucide-react";
 import { cn } from "@takeaseat/ui";
 import { useAuth } from "@/lib/auth/mock-auth";
-
-const NAV = [
-  { href: "/search", label: "Search", icon: Search },
-  { href: "/reservations", label: "Reservations", icon: CalendarCheck2 },
-  { href: "/favorites", label: "Favorites", icon: Star },
-] as const;
-
-const ADMIN_NAV = [
-  { href: "/admin", label: "Admin", icon: Settings },
-] as const;
+import { useLocale } from "@/lib/i18n/context";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { t } = useLocale();
   const showAdmin = user?.role === "admin" || user?.role === "manager";
+
+  const NAV = [
+    { href: "/search", label: t.nav.search, icon: Search },
+    { href: "/reservations", label: t.nav.reservations, icon: CalendarCheck2 },
+    { href: "/favorites", label: t.nav.favorites, icon: Star },
+  ] as const;
+
+  const ADMIN_NAV = [
+    { href: "/admin", label: t.nav.admin, icon: Settings },
+  ] as const;
 
   return (
     <div className="flex h-full flex-col gap-6 p-4">
@@ -32,7 +34,7 @@ export function Sidebar() {
         <span className="flex size-8 items-center justify-center rounded-md bg-accent text-accent-fg">
           <LayoutDashboard className="size-4" />
         </span>
-        <span className="text-sm font-semibold">Take A Seat</span>
+        <span className="text-sm font-semibold">{t.nav.appName}</span>
       </Link>
 
       <nav className="flex flex-col gap-0.5">
@@ -47,7 +49,7 @@ export function Sidebar() {
       {showAdmin ? (
         <div className="flex flex-col gap-0.5">
           <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-fg-muted">
-            Workspace
+            {t.nav.workspace}
           </p>
           {ADMIN_NAV.map((item) => (
             <NavLink key={item.href} href={item.href} active={pathname.startsWith(item.href)}>

@@ -3,6 +3,7 @@ import * as React from "react";
 import { SearchX } from "lucide-react";
 import { Card, CardContent, CardHeader, EmptyState, Skeleton } from "@takeaseat/ui";
 import type { ResourceWithAvailability } from "@/lib/api/types";
+import { useLocale } from "@/lib/i18n/context";
 import { ResourceCard } from "./resource-card";
 import { BookDialog } from "./book-dialog";
 
@@ -13,6 +14,7 @@ export interface ResultsGridProps {
 }
 
 export function ResultsGrid({ resources, loading, error }: ResultsGridProps) {
+  const { t } = useLocale();
   const [selected, setSelected] = React.useState<ResourceWithAvailability | null>(null);
 
   if (loading) {
@@ -39,7 +41,7 @@ export function ResultsGrid({ resources, loading, error }: ResultsGridProps) {
     return (
       <EmptyState
         icon={<SearchX className="size-5" />}
-        title="Couldn't load resources"
+        title={t.resultsGrid.error}
         description={error}
       />
     );
@@ -49,8 +51,8 @@ export function ResultsGrid({ resources, loading, error }: ResultsGridProps) {
     return (
       <EmptyState
         icon={<SearchX className="size-5" />}
-        title="No resources match"
-        description="Try widening the time window or removing a filter."
+        title={t.resultsGrid.noMatch}
+        description={t.resultsGrid.noMatchHint}
       />
     );
   }
