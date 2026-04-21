@@ -14,10 +14,11 @@ var (
 )
 
 func WriteProblem(w http.ResponseWriter, r *http.Request, p *problems.Detail) {
-	p.Instance = r.URL.String()
+	d := *p
+	d.Instance = r.URL.String()
 	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(p.Status)
-	w.Write([]byte(`{"type":"` + p.Type + `","title":"` + p.Title + `","status":` + itoa(p.Status) + `,"detail":"` + p.Detail + `"}`))
+	w.WriteHeader(d.Status)
+	w.Write([]byte(`{"type":"` + d.Type + `","title":"` + d.Title + `","status":` + itoa(d.Status) + `,"detail":"` + d.Detail + `","instance":"` + d.Instance + `"}`)) //nolint:errcheck
 }
 
 func itoa(n int) string {

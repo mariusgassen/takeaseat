@@ -32,11 +32,22 @@ type ReservationResponse struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
-func (i *ReservationInput) Validate() error {
+func (i *ReservationInput) Validate() (time.Time, time.Time, error) {
 	if i.ResourceID == "" {
-		return problems.ErrInvalidInput
+		return time.Time{}, time.Time{}, problems.ErrInvalidInput
 	}
-	return nil
+	start, err := time.Parse(time.RFC3339, i.Start)
+	if err != nil {
+		return time.Time{}, time.Time{}, problems.ErrInvalidInput
+	}
+	end, err := time.Parse(time.RFC3339, i.End)
+	if err != nil {
+		return time.Time{}, time.Time{}, problems.ErrInvalidInput
+	}
+	if !end.After(start) {
+		return time.Time{}, time.Time{}, problems.ErrInvalidInput
+	}
+	return start, end, nil
 }
 
 func rangeToString(r pgtype.Range[pgtype.Timestamptz]) string {
@@ -151,7 +162,8 @@ func CreateReservation(queries db.Querier, redisClient *redis.Client) http.Handl
 			WriteProblem(w, r, problems.BadRequest)
 			return
 		}
-		if err := input.Validate(); err != nil {
+		start, end, err := input.Validate()
+		if err != nil {
 			writeError(w, r, err)
 			return
 		}
@@ -162,8 +174,6 @@ func CreateReservation(queries db.Querier, redisClient *redis.Client) http.Handl
 			return
 		}
 
-		start, _ := time.Parse(time.RFC3339, input.Start)
-		end, _ := time.Parse(time.RFC3339, input.End)
 		during := pgtype.Range[pgtype.Timestamptz]{
 			Lower: pgtype.Timestamptz{Time: start, Valid: true},
 			Upper: pgtype.Timestamptz{Time: end, Valid: true},
@@ -246,7 +256,7 @@ func CheckOut(queries db.Querier, redisClient *redis.Client) http.HandlerFunc {
 
 		reservation, err := queries.UpdateReservationStatus(r.Context(), db.UpdateReservationStatusParams{
 			ID:     uid,
-			Status: db.ReservationStatusConfirmed,
+			Status: db.ReservationStatusCheckedOut,
 		})
 		if err != nil {
 			writeError(w, r, err)
@@ -287,10 +297,11 @@ func UpdateReservationStatus(queries db.Querier, redisClient *redis.Client) http
 
 		status := db.ReservationStatus(input.Status)
 		validStatuses := map[db.ReservationStatus]bool{
-			db.ReservationStatusConfirmed: true,
-			db.ReservationStatusCancelled: true,
-			db.ReservationStatusCheckedIn: true,
-			db.ReservationStatusNoShow: true,
+			db.ReservationStatusConfirmed:  true,
+			db.ReservationStatusCancelled:  true,
+			db.ReservationStatusCheckedIn:  true,
+			db.ReservationStatusCheckedOut: true,
+			db.ReservationStatusNoShow:     true,
 		}
 		if !validStatuses[status] {
 			writeError(w, r, problems.ErrInvalidInput)
