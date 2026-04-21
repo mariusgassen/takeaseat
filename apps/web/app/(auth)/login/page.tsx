@@ -16,14 +16,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-bg px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="items-center text-center">
-          <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-accent-soft text-accent">
-            <CalendarCheck2 className="size-6" />
-          </div>
-          <CardTitle className="text-xl">{t.login.title}</CardTitle>
-          <CardDescription>{t.login.description}</CardDescription>
+    <div className="flex min-h-svh flex-col items-center justify-center bg-gradient-to-br from-accent-soft via-bg to-bg px-4 py-12">
+      <div className="mb-8 flex flex-col items-center gap-3 text-center">
+        <span className="flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-fg shadow-md">
+          <CalendarCheck2 className="size-7" />
+        </span>
+        <span className="text-xl font-bold tracking-tight">{t.nav.appName}</span>
+      </div>
+
+      <Card className="w-full max-w-sm shadow-lg">
+        <CardHeader className="items-center pb-4 text-center">
+          <CardTitle className="text-lg">{t.login.title}</CardTitle>
+          <CardDescription className="text-sm">{t.login.description}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Button onClick={handleContinue} size="lg" className="w-full">
