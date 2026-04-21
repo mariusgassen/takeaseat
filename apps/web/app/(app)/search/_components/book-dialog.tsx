@@ -14,7 +14,8 @@ import {
   Label,
 } from "@takeaseat/ui";
 import type { ResourceWithAvailability } from "@/lib/api/types";
-import { TYPE_META, formatFloor } from "./type-meta";
+import { TYPE_META } from "./type-meta";
+import { useLocale, formatFloor } from "@/lib/i18n/context";
 
 export interface BookDialogProps {
   resource: ResourceWithAvailability | null;
@@ -35,6 +36,7 @@ function plusOneHour(value: string): string {
 }
 
 export function BookDialog({ resource, onClose }: BookDialogProps) {
+  const { t } = useLocale();
   const [start, setStart] = React.useState(() => defaultStart());
   const [end, setEnd] = React.useState(() => plusOneHour(defaultStart()));
   const [confirmed, setConfirmed] = React.useState(false);
@@ -50,6 +52,11 @@ export function BookDialog({ resource, onClose }: BookDialogProps) {
 
   if (!resource) return null;
   const meta = TYPE_META[resource.type];
+  const floorLabel = formatFloor(resource.floor, t.floors);
+  const capacityLabel =
+    resource.capacity === 1
+      ? t.resourceCard.seat
+      : t.resourceCard.seats.replace("{{n}}", String(resource.capacity));
 
   return (
     <Dialog open={resource !== null} onOpenChange={(open) => !open && onClose()}>
@@ -59,30 +66,30 @@ export function BookDialog({ resource, onClose }: BookDialogProps) {
             <span className="flex size-12 items-center justify-center rounded-full bg-success/15 text-success">
               <CalendarCheck2 className="size-6" />
             </span>
-            <DialogTitle>Reservation confirmed</DialogTitle>
+            <DialogTitle>{t.bookDialog.confirmedTitle}</DialogTitle>
             <DialogDescription>
-              {resource.name} is held for you. We sent a calendar invite to your
-              email. (Mock — no API call yet.)
+              {t.bookDialog.confirmedDescription.replace("{{name}}", resource.name)}
             </DialogDescription>
             <DialogClose asChild>
               <Button onClick={onClose} className="mt-2">
-                Done
+                {t.bookDialog.done}
               </Button>
             </DialogClose>
           </div>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Book {resource.name}</DialogTitle>
+              <DialogTitle>
+                {t.bookDialog.title.replace("{{name}}", resource.name)}
+              </DialogTitle>
               <DialogDescription>
-                {meta.label} · {formatFloor(resource.floor)} ·{" "}
-                {resource.capacity === 1 ? "1 seat" : `${resource.capacity} seats`}
+                {t.types[resource.type].label} · {floorLabel} · {capacityLabel}
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="book-start">Starts</Label>
+                <Label htmlFor="book-start">{t.bookDialog.starts}</Label>
                 <Input
                   id="book-start"
                   type="datetime-local"
@@ -94,7 +101,7 @@ export function BookDialog({ resource, onClose }: BookDialogProps) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="book-end">Ends</Label>
+                <Label htmlFor="book-end">{t.bookDialog.ends}</Label>
                 <Input
                   id="book-end"
                   type="datetime-local"
@@ -107,9 +114,9 @@ export function BookDialog({ resource, onClose }: BookDialogProps) {
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="ghost">Cancel</Button>
+                <Button variant="ghost">{t.bookDialog.cancel}</Button>
               </DialogClose>
-              <Button onClick={() => setConfirmed(true)}>Confirm booking</Button>
+              <Button onClick={() => setConfirmed(true)}>{t.bookDialog.confirm}</Button>
             </DialogFooter>
           </>
         )}

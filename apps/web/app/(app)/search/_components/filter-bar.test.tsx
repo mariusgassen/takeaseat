@@ -60,8 +60,8 @@ describe("FilterBar", () => {
     currentSearch = "amenities=whiteboard,tv_screen";
     render(<FilterBar />);
     expect(screen.getByText("Whiteboard")).toBeInTheDocument();
-    expect(screen.getByText("Tv Screen")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Remove whiteboard" }));
+    expect(screen.getByText("TV Screen")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Remove Whiteboard" }));
     const lastCall = replace.mock.calls.at(-1)?.[0] as string;
     expect(lastCall).toContain("amenities=tv_screen");
   });

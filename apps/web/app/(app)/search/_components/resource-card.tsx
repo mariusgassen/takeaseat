@@ -11,7 +11,8 @@ import {
   CardTitle,
 } from "@takeaseat/ui";
 import type { ResourceWithAvailability } from "@/lib/api/types";
-import { TYPE_META, formatAmenity, formatFloor } from "./type-meta";
+import { TYPE_META } from "./type-meta";
+import { useLocale, formatFloor, localizeAmenity } from "@/lib/i18n/context";
 
 export interface ResourceCardProps {
   resource: ResourceWithAvailability;
@@ -19,8 +20,15 @@ export interface ResourceCardProps {
 }
 
 export function ResourceCard({ resource, onBook }: ResourceCardProps) {
+  const { t } = useLocale();
   const meta = TYPE_META[resource.type];
   const Icon = meta.icon;
+
+  const floorLabel = formatFloor(resource.floor, t.floors);
+  const capacityLabel =
+    resource.capacity === 1
+      ? t.resourceCard.seat
+      : t.resourceCard.seats.replace("{{n}}", String(resource.capacity));
 
   return (
     <Card className="flex h-full flex-col">
@@ -31,7 +39,9 @@ export function ResourceCard({ resource, onBook }: ResourceCardProps) {
           </span>
           <div className="space-y-1">
             <CardTitle>{resource.name}</CardTitle>
-            <p className="text-xs uppercase tracking-wide text-fg-muted">{meta.label}</p>
+            <p className="text-xs uppercase tracking-wide text-fg-muted">
+              {t.types[resource.type].label}
+            </p>
           </div>
         </div>
         <AvailabilityBadge resource={resource} />
@@ -41,18 +51,18 @@ export function ResourceCard({ resource, onBook }: ResourceCardProps) {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-fg-muted">
           <span className="inline-flex items-center gap-1.5">
             <Users className="size-3.5" />
-            {resource.capacity === 1 ? "1 seat" : `${resource.capacity} seats`}
+            {capacityLabel}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="size-3.5" />
-            {formatFloor(resource.floor)}
+            {floorLabel}
           </span>
         </div>
 
         {resource.amenities.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {resource.amenities.slice(0, 4).map((a) => (
-              <Badge key={a}>{formatAmenity(a)}</Badge>
+              <Badge key={a}>{localizeAmenity(a, t.amenities)}</Badge>
             ))}
             {resource.amenities.length > 4 ? (
               <Badge>+{resource.amenities.length - 4}</Badge>
@@ -68,7 +78,7 @@ export function ResourceCard({ resource, onBook }: ResourceCardProps) {
           variant={resource.is_available_now ? "default" : "outline"}
           onClick={() => onBook(resource)}
         >
-          {resource.is_available_now ? "Book now" : "View slots"}
+          {resource.is_available_now ? t.resourceCard.bookNow : t.resourceCard.viewSlots}
         </Button>
       </CardFooter>
     </Card>
@@ -76,25 +86,27 @@ export function ResourceCard({ resource, onBook }: ResourceCardProps) {
 }
 
 function AvailabilityBadge({ resource }: { resource: ResourceWithAvailability }) {
+  const { t } = useLocale();
   if (resource.is_available_now) {
-    return <Badge variant="success">Available</Badge>;
+    return <Badge variant="success">{t.resourceCard.available}</Badge>;
   }
-  return <Badge variant="warning">Busy</Badge>;
+  return <Badge variant="warning">{t.resourceCard.busy}</Badge>;
 }
 
 function NextSlotHint({ resource }: { resource: ResourceWithAvailability }) {
+  const { t } = useLocale();
   if (resource.is_available_now) {
-    return <span className="text-xs text-fg-muted">Open right now</span>;
+    return <span className="text-xs text-fg-muted">{t.resourceCard.openNow}</span>;
   }
   if (!resource.next_available_at) {
-    return <span className="text-xs text-fg-muted">No upcoming slots</span>;
+    return <span className="text-xs text-fg-muted">{t.resourceCard.noSlots}</span>;
   }
   const when = new Date(resource.next_available_at);
+  const time = when.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-fg-muted">
       <CalendarClock className="size-3.5" />
-      Free at{" "}
-      {when.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+      {t.resourceCard.freeAt.replace("{{time}}", time)}
     </span>
   );
 }
