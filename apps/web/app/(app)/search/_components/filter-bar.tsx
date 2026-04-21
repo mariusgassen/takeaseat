@@ -40,6 +40,7 @@ export function FilterBar() {
   const activeAmenities = filters.amenities ?? [];
 
   const activeFilterCount =
+    (filters.type ? 1 : 0) +
     (filters.capacity_min ? 1 : 0) +
     (filters.floor !== undefined ? 1 : 0) +
     activeAmenities.length;
