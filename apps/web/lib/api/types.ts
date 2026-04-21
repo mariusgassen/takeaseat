@@ -35,3 +35,53 @@ export interface ResourceSearchFilters {
   amenities?: string[];
   q?: string;
 }
+
+export type ReservationStatus =
+  | "confirmed"
+  | "cancelled"
+  | "checked_in"
+  | "checked_out"
+  | "no_show";
+
+export interface Reservation {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  resource_id: string;
+  during: string;
+  status: ReservationStatus;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+  recurring_series_id?: string | null;
+}
+
+export type RecurrenceFrequency = "daily" | "weekly";
+
+export interface RecurringSeriesInput {
+  resource_id: string;
+  frequency: RecurrenceFrequency;
+  days_of_week: number[];
+  time_start: string;
+  time_end: string;
+  date_start: string;
+  date_end: string;
+  notes?: string;
+}
+
+export interface RecurringSeries {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  resource_id: string;
+  frequency: RecurrenceFrequency;
+  days_of_week: number[];
+  time_start: string;
+  time_end: string;
+  date_start: string;
+  date_end: string;
+  notes: string;
+  created_at: string;
+  occurrences_created: number;
+  occurrences_skipped: number;
+}
