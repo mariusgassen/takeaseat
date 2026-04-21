@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -50,9 +51,11 @@ func main() {
 
 	var redisClient *redis.Client
 	if cfg.RedisURL != "" {
-		redisClient, rErr := redis.New(cfg.RedisURL)
+		var rErr error
+		redisClient, rErr = redis.New(cfg.RedisURL)
 		if rErr != nil {
 			log.Printf("redis: not connected (%v)", rErr)
+			redisClient = nil
 		} else {
 			defer redisClient.Close()
 		}
@@ -144,7 +147,7 @@ func main() {
 	<-quit
 	log.Println("api: shutting down")
 
-	ctx, cancel := context.WithTimeout(ctx, 5)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("shutdown: %v", err)

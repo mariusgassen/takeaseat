@@ -14,10 +14,11 @@ import (
 type ReservationStatus string
 
 const (
-	ReservationStatusConfirmed ReservationStatus = "confirmed"
-	ReservationStatusCancelled ReservationStatus = "cancelled"
-	ReservationStatusCheckedIn ReservationStatus = "checked_in"
-	ReservationStatusNoShow    ReservationStatus = "no_show"
+	ReservationStatusConfirmed  ReservationStatus = "confirmed"
+	ReservationStatusCancelled  ReservationStatus = "cancelled"
+	ReservationStatusCheckedIn  ReservationStatus = "checked_in"
+	ReservationStatusCheckedOut ReservationStatus = "checked_out"
+	ReservationStatusNoShow     ReservationStatus = "no_show"
 )
 
 func (e *ReservationStatus) Scan(src interface{}) error {

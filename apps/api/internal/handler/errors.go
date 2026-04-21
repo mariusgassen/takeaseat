@@ -31,11 +31,12 @@ var (
 )
 
 func WriteProblem(w http.ResponseWriter, r *http.Request, p *problems.Detail) {
-	if p.Instance == "" {
-		p.Instance = r.URL.String()
+	d := *p
+	if d.Instance == "" {
+		d.Instance = r.URL.String()
 	}
-	render.Status(r, p.Status)
-	render.JSON(w, r, p)
+	render.Status(r, d.Status)
+	render.JSON(w, r, &d)
 }
 
 func RenderProblem(w http.ResponseWriter, r *http.Request, p *problems.Detail) {

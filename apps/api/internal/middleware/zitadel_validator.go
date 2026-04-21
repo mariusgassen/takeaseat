@@ -2,7 +2,9 @@ package middleware
 
 import (
 	"context"
+	"crypto"
 	"crypto/rsa"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -60,7 +62,7 @@ func (v *ZitadelValidator) Validate(ctx context.Context, rawToken string) (*Clai
 		return nil, ErrInvalidToken
 	}
 
-	headerB64, payloadB64, _ := parts[0], parts[1], parts[2]
+	headerB64, payloadB64, sigB64 := parts[0], parts[1], parts[2]
 	header, err := v.decodeBase64URL([]byte(headerB64))
 	if err != nil {
 		return nil, fmt.Errorf("invalid token header: %w", err)
@@ -75,19 +77,40 @@ func (v *ZitadelValidator) Validate(ctx context.Context, rawToken string) (*Clai
 		return nil, ErrInvalidToken
 	}
 
+	if headerObj.Alg != "RS256" {
+		return nil, fmt.Errorf("unsupported algorithm: %s", headerObj.Alg)
+	}
+
+	pubKey, err := v.GetKey(headerObj.Kid)
+	if err != nil {
+		return nil, fmt.Errorf("unknown key id %q: %w", headerObj.Kid, err)
+	}
+
+	signingInput := parts[0] + "." + parts[1]
+	digest := sha256.Sum256([]byte(signingInput))
+
+	sig, err := v.decodeBase64URL([]byte(sigB64))
+	if err != nil {
+		return nil, fmt.Errorf("invalid token signature: %w", err)
+	}
+
+	if err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, digest[:], sig); err != nil {
+		return nil, ErrInvalidToken
+	}
+
 	payload, err := v.decodeBase64URL([]byte(payloadB64))
 	if err != nil {
 		return nil, fmt.Errorf("invalid token payload: %w", err)
 	}
 
 	var claims struct {
-		Issuer    string `json:"iss"`
-		Subject   string `json:"sub"`
-		Audience  any    `json:"aud"`
-		Expiry    int64  `json:"exp"`
-		IssuedAt  int64  `json:"iat"`
-		TenantID  string `json:"urn:zitadel:iam:org:id"`
-		Role      string `json:"urn:zitadel:iam:role"`
+		Issuer   string `json:"iss"`
+		Subject  string `json:"sub"`
+		Audience any    `json:"aud"`
+		Expiry   int64  `json:"exp"`
+		IssuedAt int64  `json:"iat"`
+		TenantID string `json:"urn:zitadel:iam:org:id"`
+		Role     string `json:"urn:zitadel:iam:role"`
 	}
 	if err := json.Unmarshal(payload, &claims); err != nil {
 		return nil, ErrInvalidToken
@@ -113,7 +136,7 @@ func (v *ZitadelValidator) Validate(ctx context.Context, rawToken string) (*Clai
 	return &Claims{
 		Subject:  claims.Subject,
 		TenantID: claims.TenantID,
-		Role:    role,
+		Role:     role,
 	}, nil
 }
 
