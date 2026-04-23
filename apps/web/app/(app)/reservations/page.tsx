@@ -28,12 +28,12 @@ function formatDateRange(during: string, locale: string): string {
   return `${dateStr} · ${startTime} – ${endTime}`;
 }
 
-const STATUS_VARIANT: Record<ReservationStatus, "default" | "secondary" | "destructive" | "outline"> = {
-  confirmed: "default",
-  checked_in: "default",
-  checked_out: "secondary",
-  cancelled: "destructive",
-  no_show: "destructive",
+const STATUS_VARIANT: Record<ReservationStatus, "default" | "accent" | "success" | "warning" | "danger"> = {
+  confirmed: "success",
+  checked_in: "accent",
+  checked_out: "default",
+  cancelled: "danger",
+  no_show: "warning",
 };
 
 function ReservationCard({ reservation }: { reservation: Reservation }) {
@@ -53,7 +53,7 @@ function ReservationCard({ reservation }: { reservation: Reservation }) {
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {reservation.recurring_series_id && (
-          <Badge variant="outline" className="gap-1 text-xs">
+          <Badge variant="default" className="gap-1 text-xs">
             <RefreshCw className="size-3" />
             {t.reservations.recurring}
           </Badge>
