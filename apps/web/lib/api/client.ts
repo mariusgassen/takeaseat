@@ -66,3 +66,29 @@ export async function apiCreateReservation(
 export async function apiGetMe(options?: RequestInit) {
   return apiFetch(buildUrl("/me"), options);
 }
+
+export async function apiListReservations(options?: RequestInit) {
+  return apiFetch(buildUrl("/reservations"), options);
+}
+
+export async function apiCreateRecurringSeries(
+  body: Record<string, unknown>,
+  options?: RequestInit
+) {
+  return apiFetch(buildUrl("/recurring-series"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(body),
+    ...options,
+  });
+}
+
+export async function apiDeleteRecurringSeries(
+  id: string,
+  options?: RequestInit
+) {
+  return apiFetch(buildUrl(`/recurring-series/${id}`), {
+    method: "DELETE",
+    ...options,
+  });
+}

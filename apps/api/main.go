@@ -105,6 +105,13 @@ func main() {
 			r.Delete("/{id}", handler.DeleteReservation(queries, redisClient))
 		})
 
+		r.Route("/api/v1/recurring-series", func(r chi.Router) {
+			r.Get("/", handler.ListMyRecurringSeries(queries))
+			r.Post("/", handler.CreateRecurringSeries(queries, redisClient))
+			r.Get("/{id}", handler.GetRecurringSeries(queries))
+			r.Delete("/{id}", handler.DeleteRecurringSeries(queries, redisClient))
+		})
+
 		r.Route("/api/v1/users", func(r chi.Router) {
 			r.Get("/", handler.ListUsers(queries))
 			r.Post("/", handler.CreateUser(queries))
