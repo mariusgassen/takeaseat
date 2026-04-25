@@ -8,7 +8,7 @@ import { useLocale } from "@/lib/i18n/context";
 
 const IS_REAL_AUTH = process.env.NEXT_PUBLIC_AUTH_MODE === "real";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const params = useSearchParams();
   const { signIn, user } = useAuth();
@@ -54,5 +54,13 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <React.Suspense>
+      <LoginContent />
+    </React.Suspense>
   );
 }

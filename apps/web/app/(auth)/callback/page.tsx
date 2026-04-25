@@ -3,7 +3,7 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { handleOAuthCallback } from "@/lib/auth/zitadel-auth";
 
-export default function CallbackPage() {
+function CallbackContent() {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -30,5 +30,13 @@ export default function CallbackPage() {
     <div className="flex min-h-svh items-center justify-center">
       <p className="text-fg-muted text-sm">Signing you in…</p>
     </div>
+  );
+}
+
+export default function CallbackPage() {
+  return (
+    <React.Suspense>
+      <CallbackContent />
+    </React.Suspense>
   );
 }

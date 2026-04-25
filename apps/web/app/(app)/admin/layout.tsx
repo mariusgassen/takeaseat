@@ -1,3 +1,4 @@
+import * as React from "react";
 import { AdminGate } from "./_components/admin-gate";
 import { AdminNav } from "./_components/admin-nav";
 
