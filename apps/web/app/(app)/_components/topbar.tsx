@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@takeaseat/ui";
-import { useAuth } from "@/lib/auth/mock-auth";
+import { useAuth } from "@/lib/auth/context";
 import { useLocale } from "@/lib/i18n/context";
 
 export function Topbar() {

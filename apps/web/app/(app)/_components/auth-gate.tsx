@@ -1,10 +1,10 @@
 "use client";
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth/mock-auth";
+import { useAuth } from "@/lib/auth/context";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [hydrated, setHydrated] = React.useState(false);
 
@@ -13,9 +13,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   React.useEffect(() => {
-    if (hydrated && !user) router.replace("/login");
-  }, [hydrated, user, router]);
+    if (hydrated && !loading && !user) router.replace("/login");
+  }, [hydrated, loading, user, router]);
 
-  if (!hydrated || !user) return null;
+  if (!hydrated || loading || !user) return null;
   return <>{children}</>;
 }
