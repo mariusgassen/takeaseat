@@ -1,18 +1,27 @@
 "use client";
-import { useRouter } from "next/navigation";
+import * as React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, CalendarCheck2 } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@takeaseat/ui";
-import { useAuth } from "@/lib/auth/mock-auth";
+import { useAuth } from "@/lib/auth/context";
 import { useLocale } from "@/lib/i18n/context";
 
-export default function LoginPage() {
+const IS_REAL_AUTH = process.env.NEXT_PUBLIC_AUTH_MODE === "real";
+
+function LoginContent() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const params = useSearchParams();
+  const { signIn, user } = useAuth();
   const { t } = useLocale();
+  const authError = params.get("error") === "auth_failed";
+
+  React.useEffect(() => {
+    if (user) router.push("/search");
+  }, [user, router]);
 
   function handleContinue() {
-    signIn();
-    router.push("/search");
+    void (signIn as () => void | Promise<void>)();
+    if (!IS_REAL_AUTH) router.push("/search");
   }
 
   return (
@@ -30,13 +39,28 @@ export default function LoginPage() {
           <CardDescription className="text-sm">{t.login.description}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
+          {authError && (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-center text-xs text-destructive">
+              {t.login.authError}
+            </p>
+          )}
           <Button onClick={handleContinue} size="lg" className="w-full">
-            {t.login.cta}
+            {IS_REAL_AUTH ? t.login.ctaReal : t.login.ctaMock}
             <ArrowRight />
           </Button>
-          <p className="text-center text-xs text-fg-muted">{t.login.ssoNote}</p>
+          {!IS_REAL_AUTH && (
+            <p className="text-center text-xs text-fg-muted">{t.login.ssoNote}</p>
+          )}
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <React.Suspense>
+      <LoginContent />
+    </React.Suspense>
   );
 }
