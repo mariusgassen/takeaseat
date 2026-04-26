@@ -55,6 +55,12 @@ function errorResponse(status: number) {
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
+  vi.stubGlobal("localStorage", {
+    getItem: vi.fn().mockReturnValue(null),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
+  });
 });
 
 afterEach(() => {
