@@ -6,10 +6,12 @@ import {
   LayoutDashboard,
   Search,
   Settings,
+  ShieldCheck,
   Star,
+  Users,
 } from "lucide-react";
 import { cn } from "@takeaseat/ui";
-import { useAuth } from "@/lib/auth/mock-auth";
+import { useAuth } from "@/lib/auth/context";
 import { useLocale } from "@/lib/i18n/context";
 
 export function Sidebar() {
@@ -25,7 +27,9 @@ export function Sidebar() {
   ] as const;
 
   const ADMIN_NAV = [
-    { href: "/admin", label: t.nav.admin, icon: Settings },
+    { href: "/admin/tenant", label: t.admin.tenantTab, icon: Settings },
+    { href: "/admin/sso", label: t.admin.ssoTab, icon: ShieldCheck },
+    { href: "/admin/users", label: t.admin.usersTab, icon: Users },
   ] as const;
 
   return (
