@@ -1,5 +1,5 @@
 services:
-  postgres:
+  takeaseat_postgres:
     image: postgis/postgis:18-3.6
     restart: unless-stopped
     environment:
@@ -14,7 +14,7 @@ services:
       timeout: 5s
       retries: 10
 
-  redis:
+  takeaseat_redis:
     image: redis:8-alpine
     restart: unless-stopped
     healthcheck:
@@ -23,7 +23,7 @@ services:
       timeout: 3s
       retries: 5
 
-  zitadel:
+  takeaseat_zitadel:
     image: ghcr.io/zitadel/zitadel:v4.13.1
     restart: on-failure
     command: start-from-init --masterkeyFromEnv --tlsMode disabled
@@ -45,7 +45,7 @@ services:
       postgres:
         condition: service_healthy
 
-  api:
+  takeaseat_api:
     build:
       context: ./apps/api
       dockerfile: Dockerfile
@@ -60,7 +60,7 @@ services:
       postgres:
         condition: service_healthy
 
-  web:
+  takeaseat_web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
