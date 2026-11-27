@@ -1,4 +1,4 @@
-FROM node:25-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -13,7 +13,7 @@ COPY . .
 RUN npm run generate --workspace=@takeaseat/types
 RUN npm run build --workspace=@takeaseat/web
 
-FROM node:25-alpine
+FROM node:26-alpine
 WORKDIR /app
 COPY --from=builder /app/apps/web/public ./apps/web/public
 COPY --from=builder /app/apps/web/.next/standalone ./
