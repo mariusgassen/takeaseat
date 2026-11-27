@@ -5,7 +5,7 @@ RUN go mod download
 COPY . .
 RUN go build -o api .
 
-FROM alpine:3.23
+FROM alpine:3.24
 WORKDIR /app
 COPY --from=builder /app/api .
 COPY --from=builder /app/migrations ./migrations
